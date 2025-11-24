@@ -1,8 +1,7 @@
 {
   "name": "myanmyan-pay-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JavaScript SDK for integrating the MMQR Merchant and Redirect payment gateway",
-  "type": "module",
   "keywords": [
     "MMQR",
     "Master",
@@ -10,32 +9,40 @@
     "JCB",
     "MPU"
   ],
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/esm/index.d.ts"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nawing/Myan-Myan-Pay-SDK.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nawing/Myan-Myan-Pay-SDK/issues"
+  },
+  "homepage": "https://github.com/nawing/Myan-Myan-Pay-SDK#readme",
   "scripts": {
-    "build": "npm run clean && tsc -p tsconfig.json && tsc -p tsconfig.cjs.json",
+    "build": "npm run clean && tsc && tsc -p tsconfig.cjs.json",
     "clean": "rm -rf dist",
     "dev": "tsc --watch"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^20.10.6",
-    "typescript": "^5.9.3",
-    "webpack": "^5.103.0",
-    "webpack-cli": "^6.0.1"
+    "typescript": "^5.9.3"
   },
   "author": "Naw Ing",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.13.2",
-    "crypto-js": "^4.2.0"
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.2.2"
   }
 }

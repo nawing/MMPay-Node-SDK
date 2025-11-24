@@ -5,13 +5,13 @@ const PORT = process.env.PORT || 3030;
 
 app.use(bodyParser.json());
 
-const { MMPaySdk } = require("../index.js");
-const MMPay = MMPaySdk(
-  "MMxxxxxxx",
-  "pk_test_abcxxxxx",
-  "sk_test_abcxxxxx",
-  "https://xxxxxx"
-);
+const { MMPaySDK } = require("../dist/cjs/index");
+const MMPay = MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+});
 
 app.post("/create-order", async (req, res) => {
   const { amount, items } = req.body;

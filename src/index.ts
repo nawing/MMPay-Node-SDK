@@ -46,20 +46,33 @@ export interface HandShakeRequest {
 export interface HandShakeResponse {
   handshakeSignature: string;
 }
+
 /**
- * MMPaySdk
+ * @SDKOptions
+ * @SDKOptions
+ * @SDKOptions
+ */
+export interface SDKOptions {
+  appId: string;
+  publishableKey: string;
+  secretKey: string;
+  apiBaseUrl: string;
+}
+
+/**
+ * MMPaySDK
  * @param {string} appId
  * @param {string} publishableKey
  * @param {string} secretKey
  * @returns {MMPayNodeSdkClass}
  */
-export function MMPaySDK(
-  appId: string,
-  publishableKey: string,
-  secretKey: string,
-  apiBaseUrl: string
-): MMPaySdkClass {
-  return new MMPaySdkClass(appId, publishableKey, secretKey, apiBaseUrl);
+export function MMPaySDK(options: SDKOptions): MMPaySdkClass {
+  return new MMPaySdkClass({
+    appId: options.appId,
+    publishableKey: options.publishableKey,
+    secretKey: options.secretKey,
+    apiBaseUrl: options.apiBaseUrl,
+  });
 }
 /**
  * @MMPaySdkClass
@@ -75,19 +88,11 @@ class MMPaySdkClass {
    * @param {string} publishableKey
    * @param {string} secretKey
    */
-  constructor(
-    appId: string,
-    publishableKey: string,
-    secretKey: string,
-    apiBaseUrl: string,
-  ) {
-    if (!publishableKey || !secretKey) {
-      throw new Error("SDK initialization failed. Publishable Key, Secret Key, and API Base URL are required.");
-    }
-    this.#appId = appId;
-    this.#publishableKey = publishableKey;
-    this.#secretKey = secretKey;
-    this.#apiBaseUrl = apiBaseUrl;
+  constructor(options: SDKOptions) {
+    this.#appId = options.appId;
+    this.#publishableKey = options.publishableKey;
+    this.#secretKey = options.secretKey;
+    this.#apiBaseUrl = options.apiBaseUrl;
   }
   /**
    * Generates an HMAC SHA256 signature for the request integrity check.

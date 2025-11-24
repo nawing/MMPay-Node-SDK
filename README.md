@@ -11,12 +11,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
-const { MMPaySdk } = require('mmpay-node-sdk');
-const MMPay = new MMPaySdk(
-  process.env.MMPAY_APP_ID!,
-  process.env.MMPAY_PUBLIC_KEY!,
-  process.env.MMPAY_SECRET_KEY!
-)
+const { MMPaySDK } = require('mmpay-node-sdk');
+const MMPay = new MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+})
 
 app.post("/create-order", async (req, res) => {
   const { amount, items } = req.body;
@@ -53,15 +54,14 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 ```
 
 ```javascript
-// TypeScript Way
-import { MMPaySdk } from 'mmpay-node-sdk';
-const MMPay = MMPaySdk( 'MM9034', 'pk_live_...', 'sk_live_...');
+// TypeScript OR Esm Module
+import { MMPaySDK } from 'mmpay-node-sdk';
 ```
 
 ## ⬇️ 1. Installation
 Install the package via npm:
 ```bash
-npm install MMPay-node-sdk --save
+npm install mmpay-node-sdk --save
 ```
 
 ## ⚙️ 2. Configuration
@@ -69,35 +69,30 @@ Before use, you must configure the shared Secret Key. This key is used for HMAC-
 It is CRITICAL that this key is loaded from an environment variable for security.
 ```javascript
 // Load the SDK and configuration
-const { MMPaySdk } = require('mmpay-node-sdk');
-const MMPay = new MMPaySdk(
-  process.env.MMPAY_APP_ID!,
-  process.env.MMPAY_PUBLIC_KEY!,
-  process.env.MMPAY_SECRET_KEY!
-)
+const { MMPaySDK } = require('mmpay-node-sdk');
+const MMPay = new MMPaySdk({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+})
 ```
 
 ## 💳 3. Make Payment
 
 ```javascript
-const { MMPaySdk } = require('mmpay-node-sdk');
-const MMPay = new MMPaySdk(
-  process.env.MMPAY_APP_ID!,
-  process.env.MMPAY_PUBLIC_KEY!,
-  process.env.MMPAY_SECRET_KEY!
-)
-
-MMPay.pay({
-  orderId: options.orderId,
-  method: options.method,
-  vendor: options.vendor,
-  amount: options.amount,
-  items: options.items,
-}).then((response) => {
-  console.log(response)
-}).catch((error) => {
-  console.log(error)
-})
+MMPay
+  .pay({
+    orderId: options.orderId,
+    method: options.method,
+    vendor: options.vendor,
+    amount: options.amount,
+    items: options.items,
+  }).then((response) => {
+    console.log(response)
+  }).catch((error) => {
+    console.log(error)
+  })
 ```
 
 ### Request Body (`payload` structure)

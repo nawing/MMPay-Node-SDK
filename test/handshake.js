@@ -1,7 +1,7 @@
 // index.js
 // Require the high-resolution performance timer from Node.js built-in module
 const { performance } = require('perf_hooks');
-const { MMPaySdk } = require("../dist/index.js");
+const { MMPaySDK } = require("../dist/cjs/index");
 
 /**
  * generateSecureRandomString
@@ -18,12 +18,12 @@ async function generateSecureRandomString(length) {
  * Executes the payment call and measures network latency.
  */
 async function start() {
-  const MMPay = MMPaySdk(
-    "MMxxxxxxx",
-    "pk_test_abcxxxxx",
-    "sk_test_abcxxxxx",
-    "https://xxxxxx"
-  );
+  const MMPay = MMPaySDK({
+    appId: "MMxxxxxxx",
+    publishableKey: "pk_test_abcxxxxx",
+    secretKey: "sk_test_abcxxxxx",
+    apiBaseUrl: "https://xxxxxx"
+  });
   const sign = await generateSecureRandomString(6);
   const startTime = performance.now();
   try {
