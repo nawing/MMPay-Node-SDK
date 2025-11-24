@@ -143,24 +143,18 @@ The request body should be a JSON object containing the transaction details. Bas
 
 ## 🚀 4. Requesting On Sandbox Environment
 ```javascript
-const { MMPaySdk } = require('mmpay-node-sdk');
-const MMPay = new MMPaySdk(
-  process.env.MMPAY_APP_ID!,
-  process.env.MMPAY_PUBLIC_KEY!,
-  process.env.MMPAY_SECRET_KEY!
-)
-
-MMPay.testPay({
-  orderId: options.orderId,
-  method: options.method,
-  vendor: options.vendor,
-  amount: options.amount,
-  items: options.items,
-}).then((response) => {
-  console.log(response)
-}).catch((error) => {
-  console.log(error)
-})
+MMPay
+  .testPay({
+    orderId: options.orderId,
+    method: options.method,
+    vendor: options.vendor,
+    amount: options.amount,
+    items: options.items,
+  }).then((response) => {
+    console.log(response)
+  }).catch((error) => {
+    console.log(error)
+  })
 ```
 
 ## 🔐 4. Verifying Incoming Callbacks (Webhooks)
@@ -168,11 +162,12 @@ To secure your webhook endpoint that receives callbacks from the MMPay server, u
 
 ```javascript
 const { MMPaySdk } = require('mmpay-node-sdk');
-const MMPay = new MMPaySdk(
-  process.env.MMPAY_APP_ID!,
-  process.env.MMPAY_PUBLIC_KEY!,
-  process.env.MMPAY_SECRET_KEY!
-)
+const MMPay = new MMPaySdk({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+})
 
 app.post("/callback", async (req, res) => {
   const incomingSignature = req.headers('sppay-x-signature');

@@ -1,5 +1,5 @@
 {
-  "name": "myanmyan-pay-sdk",
+  "name": "mmpay-node-sdk",
   "version": "1.0.2",
   "description": "JavaScript SDK for integrating the MMQR Merchant and Redirect payment gateway",
   "keywords": [
