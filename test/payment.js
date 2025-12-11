@@ -2,6 +2,8 @@
 // Require the high-resolution performance timer from Node.js built-in module
 const { performance } = require('perf_hooks');
 const { MMPaySDK } = require("../dist/cjs/index");
+const dotenv = require("dotenv");
+dotenv.config()
 
 /**
  * generateSecureRandomString
@@ -19,22 +21,21 @@ async function generateSecureRandomString(length) {
  */
 async function start() {
   const MMPay = MMPaySDK({
-    appId: "MMxxxxxxx",
-    publishableKey: "pk_test_abcxxxxx",
-    secretKey: "sk_test_abcxxxxx",
-    apiBaseUrl: "https://xxxxxx"
+    appId: process.env.APP_ID,
+    publishableKey: process.env.PUB_KEY,
+    secretKey: process.env.SEC_KEY,
+    apiBaseUrl: process.env.BASEURL
   });
   const orderId = await generateSecureRandomString(6);
   const startTime = performance.now();
   try {
     const payload = {
       orderId: orderId,
-      amount: 30000,
+      amount: 3000,
       currency: "MMK",
-      items: [{ name: "Items", amount: 3000, quantity: 10 }],
-      callbackUrl: "https://"  // This is already set by default
+      items: [{ name: "Items", amount: 3000, quantity: 1 }]
     };
-    const response = await MMPay.testPay(payload);
+    const response = await MMPay.sandboxPay(payload);
     const endTime = performance.now();
     const latencyMs = (endTime - startTime).toFixed(3);
 
@@ -51,13 +52,7 @@ async function start() {
     console.error(`\n--- Transaction Failed ---`);
     console.error(`Order ID: ${orderId}`);
     console.error(`**Network Latency: ${latencyMs} ms**`);
-
-    // Check if the error is a standard Error object for message access
-    if (error && typeof error.message !== 'undefined') {
-      console.error(`Error Message: ${error.message}`);
-    } else {
-      console.error(`Full Error Object:`, error);
-    }
+    console.error(`Error Message: ${error.message}`);
     console.error(`--------------------------\n`);
   }
 }

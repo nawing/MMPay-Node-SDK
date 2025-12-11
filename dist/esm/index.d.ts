@@ -1,10 +1,13 @@
 export interface PaymentRequest {
-    appId?: string;
     orderId: string;
     amount: number;
     currency?: string;
     callbackUrl?: string;
     items: Item[];
+}
+export interface XPaymentRequest extends PaymentRequest {
+    appId?: string;
+    nonce?: string;
 }
 export interface Item {
     name: string;
@@ -37,10 +40,11 @@ export interface CallbackIncomingData {
     createdAt: string;
 }
 export interface HandShakeRequest {
-    handshakeSignature: string;
+    orderId: string;
+    nonce: string;
 }
 export interface HandShakeResponse {
-    handshakeSignature: string;
+    token: string;
 }
 /**
  * @SDKOptions
@@ -89,19 +93,21 @@ declare class MMPaySdkClass {
     /**
      * sandboxHandShake
      * @param {HandShakeRequest} payload
+     * @param {string} payload.orderId
+     * @param {string} payload.nonce
      * @returns {Promise<HandShakeResponse>}
      */
     sandboxHandShake(payload: HandShakeRequest): Promise<HandShakeResponse>;
     /**
      * sandboxPay
-     * @param {PaymentRequest} payload
-     * @param {string} payload.orderId
-     * @param {number} payload.amount
-     * @param {string} payload.callbackUrl
-     * @param {Item[]} payload.items
+     * @param {PaymentRequest} params
+     * @param {string} params.orderId
+     * @param {number} params.amount
+     * @param {string} params.callbackUrl
+     * @param {Item[]} params.items
      * @returns {Promise<PaymentResponse>}
      */
-    sandboxPay(payload: PaymentRequest): Promise<PaymentResponse>;
+    sandboxPay(params: PaymentRequest): Promise<PaymentResponse>;
     /**
      * @Production_Environment
      * @Production_Environment
@@ -115,13 +121,13 @@ declare class MMPaySdkClass {
     handShake(payload: HandShakeRequest): Promise<HandShakeResponse>;
     /**
      * pay
-     * @param {PaymentRequest} payload - The data for the payment.
-     * @param {string} payload.orderId
-     * @param {number} payload.amount
-     * @param {Item[]} payload.items
+     * @param {PaymentRequest} params - The data for the payment.
+     * @param {string} params.orderId
+     * @param {number} params.amount
+     * @param {Item[]} params.items
      * @returns {Promise<PaymentResponse>}
      */
-    pay(payload: PaymentRequest): Promise<PaymentResponse>;
+    pay(params: PaymentRequest): Promise<PaymentResponse>;
     /**
      * verifyCb
      * @param {string} payload

@@ -2,12 +2,16 @@ import axios from 'axios';
 import CryptoJS from 'crypto-js';
 
 export interface PaymentRequest {
-  appId?: string;
   orderId: string;
   amount: number;
   currency?: string;
   callbackUrl?: string;
   items: Item[]
+}
+
+export interface XPaymentRequest extends PaymentRequest {
+  appId?: string;
+  nonce?: string;
 }
 
 export interface Item {
@@ -39,12 +43,12 @@ export interface CallbackIncomingData {
   createdAt: string;
 }
 
-
 export interface HandShakeRequest {
-  handshakeSignature: string;
+  orderId: string;
+  nonce: string;
 }
 export interface HandShakeResponse {
-  handshakeSignature: string;
+  token: string;
 }
 
 /**
@@ -82,6 +86,9 @@ class MMPaySdkClass {
   readonly #publishableKey: string;
   readonly #secretKey: string;
   readonly #apiBaseUrl: string;
+
+
+  #btoken: string;
   /**
    * Initializes the SDK with the merchant's keys and the API endpoint.
    * @param {string} appId
@@ -114,6 +121,8 @@ class MMPaySdkClass {
   /**
    * sandboxHandShake
    * @param {HandShakeRequest} payload
+   * @param {string} payload.orderId
+   * @param {string} payload.nonce
    * @returns {Promise<HandShakeResponse>}
    */
   async sandboxHandShake(payload: HandShakeRequest): Promise<HandShakeResponse> {
@@ -121,41 +130,62 @@ class MMPaySdkClass {
     const bodyString = JSON.stringify(payload);
     const nonce = Date.now().toString();
     const signature = this._generateSignature(bodyString, nonce);
-    const response = await axios.post(endpoint, payload, {
-      headers: {
-        'Authorization': `Bearer ${this.#publishableKey}`,
-        'X-Mmpay-Nonce': nonce,
-        'X-Mmpay-Signature': signature,
-        'Content-Type': 'application/json',
-      }
-    });
-    return response.data as HandShakeResponse;
+    try {
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      this.#btoken = response.data.token;
+      return response.data as HandShakeResponse;
+    } catch (error) {
+      return error
+    }
   }
   /**
    * sandboxPay
-   * @param {PaymentRequest} payload
-   * @param {string} payload.orderId
-   * @param {number} payload.amount
-   * @param {string} payload.callbackUrl
-   * @param {Item[]} payload.items
+   * @param {PaymentRequest} params
+   * @param {string} params.orderId
+   * @param {number} params.amount
+   * @param {string} params.callbackUrl
+   * @param {Item[]} params.items
    * @returns {Promise<PaymentResponse>}
    */
-  async sandboxPay(payload: PaymentRequest): Promise<PaymentResponse> {
-    payload.appId = this.#appId as string;
+  async sandboxPay(params: PaymentRequest): Promise<PaymentResponse> {
     const endpoint = `${this.#apiBaseUrl}/payments/sandbox-create`;
-    const bodyString = JSON.stringify(payload);
     const nonce = Date.now().toString();
+    let _xpayload: XPaymentRequest = {
+      appId: this.#appId,
+      nonce: nonce,
+      amount: params.amount,
+      orderId: params.orderId,
+      callbackUrl: params.callbackUrl,
+      items: params.items,
+    };
+    const bodyString = JSON.stringify(_xpayload);
     const signature = this._generateSignature(bodyString, nonce);
-    const response = await axios.post(endpoint, payload, {
-      headers: {
-        'Authorization': `Bearer ${this.#publishableKey}`,
-        'X-Mmpay-Nonce': nonce,
-        'X-Mmpay-Signature': signature,
-        'Content-Type': 'application/json',
-      }
-    });
-    return response.data as PaymentResponse;
+    await this.sandboxHandShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    try {
+      const response = await axios.post(endpoint, _xpayload, {
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Btoken': this.#btoken,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      return response.data as PaymentResponse;
+    } catch (error) {
+      return error
+    }
   }
+
+
+
 
 
 
@@ -175,39 +205,57 @@ class MMPaySdkClass {
     const bodyString = JSON.stringify(payload);
     const nonce = Date.now().toString();
     const signature = this._generateSignature(bodyString, nonce);
-    const response = await axios.post(endpoint, payload, {
-      headers: {
-        'Authorization': `Bearer ${this.#publishableKey}`,
-        'X-Mmpay-Nonce': nonce,
-        'X-Mmpay-Signature': signature,
-        'Content-Type': 'application/json',
-      }
-    });
-    return response.data as HandShakeResponse;
+    try {
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      this.#btoken = response.data.token;
+      return response.data as HandShakeResponse;
+    } catch (error) {
+      return error
+    }
   }
   /**
    * pay
-   * @param {PaymentRequest} payload - The data for the payment.
-   * @param {string} payload.orderId
-   * @param {number} payload.amount
-   * @param {Item[]} payload.items
+   * @param {PaymentRequest} params - The data for the payment.
+   * @param {string} params.orderId
+   * @param {number} params.amount
+   * @param {Item[]} params.items
    * @returns {Promise<PaymentResponse>}
    */
-  async pay(payload: PaymentRequest): Promise<PaymentResponse> {
-    payload.appId = this.#appId as string;
+  async pay(params: PaymentRequest): Promise<PaymentResponse> {
     const endpoint = `${this.#apiBaseUrl}/payments/create`;
-    const bodyString = JSON.stringify(payload);
-    const nonce = Date.now().toString(); // Simple timestamp nonce
+    const nonce = Date.now().toString();
+    let _xpayload: XPaymentRequest = {
+      appId: this.#appId,
+      nonce: nonce,
+      amount: params.amount,
+      orderId: params.orderId,
+      callbackUrl: params.callbackUrl,
+      items: params.items,
+    };
+    const bodyString = JSON.stringify(_xpayload);
     const signature = this._generateSignature(bodyString, nonce);
-    const response = await axios.post(endpoint, payload, {
-      headers: {
-        'Authorization': `Bearer ${this.#publishableKey}`,
-        'X-Mmpay-Nonce': nonce,
-        'X-Mmpay-Signature': signature,
-        'Content-Type': 'application/json',
-      }
-    });
-    return response.data as PaymentResponse;
+    await this.sandboxHandShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    try {
+      const response = await axios.post(endpoint, _xpayload, {
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Btoken': this.#btoken,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      return response.data as PaymentResponse;
+    } catch (error) {
+      return error
+    }
   }
   /**
    * verifyCb
