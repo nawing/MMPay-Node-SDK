@@ -120,7 +120,7 @@ class MMPaySdkClass {
         };
         const bodyString = JSON.stringify(_xpayload);
         const signature = this._generateSignature(bodyString, nonce);
-        await this.sandboxHandShake({ orderId: _xpayload.orderId, nonce: nonce });
+        await this.sandboxHandShake({ orderId: _xpayload.orderId, nonce: _xpayload.nonce });
         try {
             const response = await axios_1.default.post(endpoint, _xpayload, {
                 headers: {
