@@ -161,416 +161,417 @@ app.post("/callback", async (req, res) => {
 
 We Love Typescript, so here are our favourite framework plugins implementations
 
-=== "Express Plugin Usage"
+#### "Express JS Framwork Usage Full Example"
 
-    ```javascript
-    const express = require("express");
-    const bodyParser = require("body-parser");
-    const app = express();
-    const PORT = process.env.PORT || 3000;
-    app.use(bodyParser.json());
+```javascript
+const express = require("express");
+const bodyParser = require("body-parser");
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(bodyParser.json());
 
-    const { MMPaySDK } = require('mmpay-node-sdk');
-    const MMPay = new MMPaySDK({
-      appId: "MMxxxxxxx",
-      publishableKey: "pk_test_abcxxxxx",
-      secretKey: "sk_test_abcxxxxx",
-      apiBaseUrl: "https://xxxxxx"
-    })
+const { MMPaySDK } = require('mmpay-node-sdk');
+const MMPay = new MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+})
 
-    app.post("/create-order", async (req, res) => {
-      const { amount, items } = req.body;
-      const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
-      const payload = {
-          'orderId': orderId,
-          amount,
-          items,
-        }
-      let payResponse = await MMPay.pay(payload);
-      res.status(200).json(payResponse);
+app.post("/create-order", async (req, res) => {
+  const { amount, items } = req.body;
+  const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
+  const payload = {
+    orderId: 'ORD-199399933',
+    amount: 5000,
+    items: [
+      { name: "Pencil", amount: 5000, quantity: 1 }
+    ]
+  }
+  let payResponse = await MMPay.pay(payload);
+  res.status(200).json(payResponse);
+});
+// Validating Callback
+app.post("/callback", async (req, res) => {
+  const incomingSignature = req.headers('x-mmpay-signature');
+  const incomingNonce = req.headers('x-mmpay-nonce');
+  const { payloadString } = req.body;
+  const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
+  if (cbResponse) {
+    const parsedPayload = JSON.parse(payloadString);
+    if (parsedPayload.status === 'SUCCESS') {
+      // SUCCESS LOGIC HERE
+    }
+    if (parsedPayload.status !== 'SUCCESS') {
+      // NOT SUCCESS LOGIC HERE
+    }
+  }
+  if (!cbResponse) {
+    return res.status(500).json({ error: 'Callback Verification Fail' });
+  }
+  res.status(200).json({ message: "Success" });
+});
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+```
+
+#### "FastifyJS With Plugin Usage Full Example (Fast)"
+
+```typescript
+//usage example
+
+import {mmpayPlugin} from './plugins/mmpayPlugin';
+
+const fastify: FastifyInstance = Fastify({ logger: true });
+
+await fastify.register(mmpayPlugin, {
+    appId: process.env.MMPAY_APP_ID!,
+    uatPubKey: process.env.MMPAY_UAT_PUBKEY!,
+    uatSecKey: process.env.MMPAY_UAT_SECKEY!,
+    prdPubKey: process.env.MMPAY_PRD_PUBKEY!,
+    prdSecKey: process.env.MMPAY_PRD_SECKEY!,
+});
+
+fastify.post('/create-order', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { amount, orderId, items } = body;
+    const payResponse = await fastify.mmpay.createProductionPayment({ amount, orderId, items });
+})
+
+fastify.post('/webhooks/mmpay', async (request: FastifyRequest<{Body: any}>, reply: FastifyReply) => {
+    const incomingSignature = request.headers['x-mmpay-signature'] as string;
+    const incomingNonce = request.headers['x-mmpay-nonce'] as string;
+    const payload = request.body as MMPayIncomingCallbackScheme;
+    const payloadString = JSON.stringify(payload);
+
+    const cbResult = await fastify.mmpay.verifyProductionCallBack({
+        payloadString: payloadString,
+        nonce: incomingNonce,
+        signature: incomingSignature
     });
-    // Validating Callback
-    app.post("/callback", async (req, res) => {
-      const incomingSignature = req.headers('x-mmpay-signature');
-      const incomingNonce = req.headers('x-mmpay-nonce');
-      const { payloadString } = req.body;
-      const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
-      if (cbResponse) {
-        const parsedPayload = JSON.parse(payloadString);
-        if (parsedPayload.status === 'SUCCESS') {
-          // SUCCESS LOGIC HERE
+
+    if (cbResult) {
+        if (payload.status === "SUCCESS") {
+
         }
-        if (parsedPayload.status !== 'SUCCESS') {
-          // NOT SUCCESS LOGIC HERE
+        if (payload.status === 'FAILED') {
+
+
+        };
+        reply.code(200).send({message: "Callback Processed Successfully"});
+    }
+
+    if (!cbResult) {
+        reply.code(200).send({message: "Callback Verification Failed"});
+    }
+});
+```
+
+```typescript
+//mmpayPlugin.ts
+//src/plugins/mmpayPlugin.ts
+
+/**
+ * MMpay FastifyJS Plugin
+ * @author          [NawIng]
+ * @organization    [MyanMyanPay]
+ */
+
+import {FastifyInstance, FastifyPluginAsync} from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
+import {MMPaySDK} from 'mmpay-node-sdk';
+/**
+ * @IOrderedItem
+ */
+interface IOrderedItem {
+    name: string;
+    quantity: number;
+    amount: number;
+}
+/**
+ * @CreateSandboxPaymentRequest
+ */
+export interface CreateSandboxPaymentRequest {
+    amount: number;
+    orderId: string;
+    items: IOrderedItem[];
+}
+/**
+ * @CreateProductionPaymentRequest
+ */
+export interface CreateProductionPaymentRequest {
+    amount: number;
+    orderId: string;
+    items: IOrderedItem[];
+}
+/**
+ * @PaymentCreateResponse
+ */
+export interface PaymentCreateResponse {
+    orderId: string;
+    amount: number;
+    currency?: string;
+    transactionRefId?: string;
+    qr: string;
+}
+/**
+ * @Callback
+ */
+export interface CallbackEncoded {
+    payloadString: string;
+    nonce: string;
+    signature: string;
+}
+/**
+ * @fastify
+ */
+declare module 'fastify' {
+    interface FastifyInstance {
+        mmpay: {
+            createSandboxPayment: (request: CreateSandboxPaymentRequest) => Promise<PaymentCreateResponse>;
+            verifySandboxCallBack: (request: CallbackEncoded) => Promise<boolean>;
+            createProductionPayment: (request: CreateProductionPaymentRequest) => Promise<PaymentCreateResponse>;
+            verifyProductionCallBack: (request: CallbackEncoded) => Promise<boolean>;
+        };
+    }
+}
+/**
+ * @MMPayPluginOptions
+ */
+interface MMPayPluginOptions {
+    appId: string;
+    uatPubKey: string;
+    uatSecKey: string;
+    prdPubKey: string;
+    prdSecKey: string;
+}
+const mmpayPlugin: FastifyPluginAsync<MMPayPluginOptions> = fastifyPlugin(async (fastify: FastifyInstance, options: MMPayPluginOptions) => {
+    const SandBoxMMPay = MMPaySDK({
+        appId: options.appId,
+        publishableKey: options.uatPubKey,
+        secretKey: options.uatSecKey,
+        apiBaseUrl: 'https://xxx.myanmyanpay.com' // Ask Our Team
+    });
+    const ProductionMMPay = MMPaySDK({
+        appId: options.appId,
+        publishableKey: options.prdPubKey,
+        secretKey: options.prdSecKey,
+        apiBaseUrl: 'https://xxx.myanmyanpay.com' // Ask Our Team
+    });
+    /**
+     * createSandboxPayment
+     * @param {CreateSandboxPaymentRequest} params
+     * @returns {Promise<PaymentCreateResponse>}
+     */
+    const createSandboxPayment = async (params: CreateSandboxPaymentRequest): Promise<PaymentCreateResponse> => {
+        let options = {
+            orderId: params.orderId,
+            currency: 'MMK',
+            amount: params.amount,
+            items: params.items
         }
-      }
-      if (!cbResponse) {
-        return res.status(500).json({ error: 'Callback Verification Fail' });
-      }
-      res.status(200).json({ message: "Success" });
+        return await SandBoxMMPay.sandboxPay(options);
+    }
+    /**
+     * verifySandboxCallBack
+     * @param {CallbackEncoded} params
+     * @param {string} params.nonce
+     * @param {string} params.signature
+     * @returns {Promise<boolean>}
+     */
+    const verifySandboxCallBack = async (params: CallbackEncoded): Promise<boolean> => {
+        return await SandBoxMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
+    };
+    /**
+     * createProductionPayment
+     * @param {CreateProductionPaymentRequest} params
+     * @returns {Promise<PaymentCreateResponse>}
+     */
+    const createProductionPayment = async (params: CreateProductionPaymentRequest): Promise<PaymentCreateResponse> => {
+        let options = {
+            orderId: params.orderId,
+            currency: 'MMK',
+            amount: params.amount,
+            items: params.items
+        }
+        return await ProductionMMPay.pay(options);
+    };
+    /**
+     * verifyProductionCallBack
+     * @param {CallbackEncoded} params
+     * @param {string} params.nonce
+     * @param {string} params.signature
+     * @returns {Promise<boolean>}
+     */
+    const verifyProductionCallBack = async (params: CallbackEncoded): Promise<boolean> => {
+        return await ProductionMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
+    };
+    /**
+     * @mmpay
+     */
+    fastify.decorate('mmpay', {
+        createSandboxPayment,
+        verifySandboxCallBack,
+        createProductionPayment,
+        verifyProductionCallBack
     });
-    app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
-    ```
+});
+export {mmpayPlugin};
+```
 
 
-=== "FastifyJS Plugin (Fast)"
+#### "ElysiaJS With Plugin Usage Full Example (Bun Native - Extremely Fast)"
 
-    ```typescript
-    //usage example
+```typescript
+//usage example
+import {Elysia} from 'elysia';
+import {mmpayPlugin} from './plugins/mmpayPlugin';
 
-    import {mmpayPlugin} from './plugins/mmpayPlugin';
+interface MMPayIncomingCallbackScheme {
+    orderId: string;
+    amount: number;
+    currency: string;
+    vendor: string;
+    status: 'PENDING' | 'SUCCESS' | 'FAILED';
+    transactionRefId: string;
+    callbackUrl?: string;
+}
 
-    const fastify: FastifyInstance = Fastify({ logger: true });
-
-    await fastify.register(mmpayPlugin, {
-        appId: process.env.MMPAY_APP_ID!,
-        uatPubKey: process.env.MMPAY_UAT_PUBKEY!,
-        uatSecKey: process.env.MMPAY_UAT_SECKEY!,
-        prdPubKey: process.env.MMPAY_PRD_PUBKEY!,
-        prdSecKey: process.env.MMPAY_PRD_SECKEY!,
-    });
-
-    fastify.post('/create-order', async (request: FastifyRequest, reply: FastifyReply) => {
+const app = new Elysia()
+    .use(mmpayPlugin)
+    .post('/create-order', async ({body, mmpay}) => {
         const { amount, orderId, items } = body;
-        const payResponse = await fastify.mmpay.createProductionPayment({ amount, orderId, items });
+        await mmpay.createProductionPayment(amount, orderid, items)
     })
-
-    fastify.post('/webhooks/mmpay', async (request: FastifyRequest<{Body: any}>, reply: FastifyReply) => {
-        const incomingSignature = request.headers['x-mmpay-signature'] as string;
-        const incomingNonce = request.headers['x-mmpay-nonce'] as string;
-        const payload = request.body as MMPayIncomingCallbackScheme;
+    .post('/create-order-sandbox', async ({body, mmpay}) => {
+        const { amount, orderId, items } = body;
+        await mmpay.createSandboxPayment(amount, orderid, items)
+    })
+    .post('/webhooks/mmpay', async ({body, headers, mmpay}) => {
+        const incomingSignature = headers['x-mmpay-signature'] as string;
+        const incomingNonce = headers['x-mmpay-nonce'] as string;
+        const payload = body as MMPayIncomingCallbackScheme;
         const payloadString = JSON.stringify(payload);
-
-        const cbResult = await fastify.mmpay.verifyProductionCallBack({
+        const cbResult = await mmpay.verifyProductionCallback({
             payloadString: payloadString,
             nonce: incomingNonce,
             signature: incomingSignature
         });
-
         if (cbResult) {
-            if (payload.status === "SUCCESS") {
-
+            if (payload.status === 'SUCCESS') {
+                // Do Success
             }
             if (payload.status === 'FAILED') {
-
-
-            };
-            reply.code(200).send({message: "Callback Processed Successfully"});
+                // Do Fail
+            }
         }
-
-        if (!cbResult) {
-            reply.code(200).send({message: "Callback Verification Failed"});
-        }
-    });
-    ```
-
-    ```typescript
-    //mmpayPlugin.ts
-    //src/plugins/mmpayPlugin.ts
-
-    /**
-     * MMpay FastifyJS Plugin
-     * @author          [NawIng]
-     * @organization    [MyanMyanPay]
-     */
-
-    import {FastifyInstance, FastifyPluginAsync} from 'fastify';
-    import fastifyPlugin from 'fastify-plugin';
-    import {MMPaySDK} from 'mmpay-node-sdk';
-    /**
-     * @IOrderedItem
-     */
-    interface IOrderedItem {
-        name: string;
-        quantity: number;
-        amount: number;
-    }
-    /**
-     * @CreateSandboxPaymentRequest
-     */
-    export interface CreateSandboxPaymentRequest {
-        amount: number;
-        orderId: string;
-        items: IOrderedItem[];
-    }
-    /**
-     * @CreateProductionPaymentRequest
-     */
-    export interface CreateProductionPaymentRequest {
-        amount: number;
-        orderId: string;
-        items: IOrderedItem[];
-    }
-    /**
-     * @PaymentCreateResponse
-     */
-    export interface PaymentCreateResponse {
-        orderId: string;
-        amount: number;
-        currency?: string;
-        transactionRefId?: string;
-        qr: string;
-    }
-    /**
-     * @Callback
-     */
-    export interface CallbackEncoded {
-        payloadString: string;
-        nonce: string;
-        signature: string;
-    }
-    /**
-     * @fastify
-     */
-    declare module 'fastify' {
-        interface FastifyInstance {
-            mmpay: {
-                createSandboxPayment: (request: CreateSandboxPaymentRequest) => Promise<PaymentCreateResponse>;
-                verifySandboxCallBack: (request: CallbackEncoded) => Promise<boolean>;
-                createProductionPayment: (request: CreateProductionPaymentRequest) => Promise<PaymentCreateResponse>;
-                verifyProductionCallBack: (request: CallbackEncoded) => Promise<boolean>;
-            };
-        }
-    }
-    /**
-     * @MMPayPluginOptions
-     */
-    interface MMPayPluginOptions {
-        appId: string;
-        uatPubKey: string;
-        uatSecKey: string;
-        prdPubKey: string;
-        prdSecKey: string;
-    }
-    const mmpayPlugin: FastifyPluginAsync<MMPayPluginOptions> = fastifyPlugin(async (fastify: FastifyInstance, options: MMPayPluginOptions) => {
-        const SandBoxMMPay = MMPaySDK({
-            appId: options.appId,
-            publishableKey: options.uatPubKey,
-            secretKey: options.uatSecKey,
-            apiBaseUrl: 'https://xxx.myanmyanpay.com' // Ask Our Team
+    })
+    .post('/webhooks/mmpay-sandbox', async ({body, headers, mmpay}) => {
+        const incomingSignature = headers['x-mmpay-signature'] as string;
+        const incomingNonce = headers['x-mmpay-nonce'] as string;
+        const payload = body as MMPayIncomingCallbackScheme;
+        const payloadString = JSON.stringify(payload);
+        const cbResult = await mmpay.verifySandboxCallback({
+            payloadString: payloadString,
+            nonce: incomingNonce,
+            signature: incomingSignature
         });
-        const ProductionMMPay = MMPaySDK({
-            appId: options.appId,
-            publishableKey: options.prdPubKey,
-            secretKey: options.prdSecKey,
-            apiBaseUrl: 'https://xxx.myanmyanpay.com' // Ask Our Team
-        });
+        if (cbResult) {
+            if (payload.status === 'SUCCESS') {
+                // Do Success
+            }
+            if (payload.status === 'FAILED') {
+                // Do Fail
+            }
+        }
+    })
+```
+
+```typescript
+//
+//mmpayPlugin.ts
+//src/plugins/mmpayPlugin.ts
+
+/**
+ * MMpay ElysiaJS Plugin
+ * @author          [NawIng]
+ * @organization    [MyanMyanPay]
+ */
+
+import {Elysia} from 'elysia';
+import {MMPaySDK} from 'mmpay-node-sdk';
+
+const SandboxMMPay = MMPaySDK({
+    appId: process.env.SBX_MMPAY_APP_ID!,
+    publishableKey: process.env.SBX_MMPAY_PUB_KEY!,
+    secretKey: process.env.SBX_MMPAY_SEC_KEY!,
+    apiBaseUrl: 'https://xxx.myanmyanpay.com', // Ask Our Team
+});
+
+const ProductionMMPay = MMPaySDK({
+    appId: process.env.PDX_MMPAY_APP_ID!,
+    publishableKey: process.env.PDX_MMPAY_PUB_KEY!,
+    secretKey: process.env.PDX_MMPAY_SEC_KEY!,
+    apiBaseUrl: 'https://xxx.myanmyanpay.com', // Ask Our Team
+});
+
+/**
+ * @Callback
+ */
+export interface CallbackEncoded {
+    payloadString: string;
+    nonce: string;
+    signature: string;
+}
+/**
+ * @mmpayPlugin
+ */
+export const mmpayPlugin = new Elysia({name: 'plugin.mmpay'})
+    .decorate('mmpay', {
         /**
          * createSandboxPayment
-         * @param {CreateSandboxPaymentRequest} params
-         * @returns {Promise<PaymentCreateResponse>}
+         * @param {string} orderId
+         * @param {number} amount
+         * @returns
          */
-        const createSandboxPayment = async (params: CreateSandboxPaymentRequest): Promise<PaymentCreateResponse> => {
-            let options = {
-                orderId: params.orderId,
-                currency: 'MMK',
-                amount: params.amount,
-                items: params.items
-            }
-            return await SandBoxMMPay.sandboxPay(options);
-        }
+        async createSandboxPayment(orderId: string, amount: number, items: any) {
+            return await SandboxMMPay.sandboxPay({
+                amount,
+                orderId,
+                items: items,
+                currency: 'MMK'
+            });
+        },
         /**
-         * verifySandboxCallBack
-         * @param {CallbackEncoded} params
-         * @param {string} params.nonce
-         * @param {string} params.signature
-         * @returns {Promise<boolean>}
+         * verifySandboxCallback
+         * @param orderId
+         * @param amount
+         * @returns
          */
-        const verifySandboxCallBack = async (params: CallbackEncoded): Promise<boolean> => {
-            return await SandBoxMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
-        };
+        async verifySandboxCallback(params: CallbackEncoded) {
+            return await SandboxMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
+        },
         /**
          * createProductionPayment
-         * @param {CreateProductionPaymentRequest} params
-         * @returns {Promise<PaymentCreateResponse>}
+         * @param {string} orderId
+         * @param {number} amount
+         * @returns
          */
-        const createProductionPayment = async (params: CreateProductionPaymentRequest): Promise<PaymentCreateResponse> => {
-            let options = {
-                orderId: params.orderId,
-                currency: 'MMK',
-                amount: params.amount,
-                items: params.items
-            }
-            return await ProductionMMPay.pay(options);
-        };
+        async createProductionPayment(orderId: string, amount: number, items: any) {
+            return await ProductionMMPay.pay({
+                amount,
+                orderId,
+                items: items,
+                currency: 'MMK'
+            });
+        },
         /**
-         * verifyProductionCallBack
+         * verifyProductionCallback
          * @param {CallbackEncoded} params
          * @param {string} params.nonce
          * @param {string} params.signature
          * @returns {Promise<boolean>}
          */
-        const verifyProductionCallBack = async (params: CallbackEncoded): Promise<boolean> => {
+        async verifyProductionCallback(params: CallbackEncoded) {
             return await ProductionMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
-        };
-        /**
-         * @mmpay
-         */
-        fastify.decorate('mmpay', {
-            createSandboxPayment,
-            verifySandboxCallBack,
-            createProductionPayment,
-            verifyProductionCallBack
-        });
+        }
     });
-    export {mmpayPlugin};
-    ```
-
-=== "ElysiaJS Plugin Bun Native (Extremely Fast)"
-
-    ```typescript
-    //usage example
-    import {Elysia} from 'elysia';
-    import {mmpayPlugin} from './plugins/mmpayPlugin';
-
-    interface MMPayIncomingCallbackScheme {
-        orderId: string;
-        amount: number;
-        currency: string;
-        vendor: string;
-        status: 'PENDING' | 'SUCCESS' | 'FAILED';
-        transactionRefId: string;
-        callbackUrl?: string;
-    }
-
-    const app = new Elysia()
-        .use(mmpayPlugin)
-        .post('/create-order', async ({body, mmpay}) => {
-            const { amount, orderId, items } = body;
-            await mmpay.createProductionPayment(amount, orderid, items)
-        })
-        .post('/create-order-sandbox', async ({body, mmpay}) => {
-            const { amount, orderId, items } = body;
-            await mmpay.createSandboxPayment(amount, orderid, items)
-        })
-        .post('/webhooks/mmpay', async ({body, headers, mmpay}) => {
-            const incomingSignature = headers['x-mmpay-signature'] as string;
-            const incomingNonce = headers['x-mmpay-nonce'] as string;
-            const payload = body as MMPayIncomingCallbackScheme;
-            const payloadString = JSON.stringify(payload);
-            const cbResult = await mmpay.verifyProductionCallback({
-                payloadString: payloadString,
-                nonce: incomingNonce,
-                signature: incomingSignature
-            });
-            if (cbResult) {
-                if (payload.status === 'SUCCESS') {
-                    // Do Success
-                }
-                if (payload.status === 'FAILED') {
-                    // Do Fail
-                }
-            }
-        })
-        .post('/webhooks/mmpay-sandbox', async ({body, headers, mmpay}) => {
-            const incomingSignature = headers['x-mmpay-signature'] as string;
-            const incomingNonce = headers['x-mmpay-nonce'] as string;
-            const payload = body as MMPayIncomingCallbackScheme;
-            const payloadString = JSON.stringify(payload);
-            const cbResult = await mmpay.verifySandboxCallback({
-                payloadString: payloadString,
-                nonce: incomingNonce,
-                signature: incomingSignature
-            });
-            if (cbResult) {
-                if (payload.status === 'SUCCESS') {
-                    // Do Success
-                }
-                if (payload.status === 'FAILED') {
-                    // Do Fail
-                }
-            }
-        })
-    ```
-
-    ```typescript
-    //
-    //mmpayPlugin.ts
-    //src/plugins/mmpayPlugin.ts
-
-    /**
-     * MMpay ElysiaJS Plugin
-     * @author          [NawIng]
-     * @organization    [MyanMyanPay]
-     */
-
-    import {Elysia} from 'elysia';
-    import {MMPaySDK} from 'mmpay-node-sdk';
-
-    const SandboxMMPay = MMPaySDK({
-        appId: process.env.SBX_MMPAY_APP_ID!,
-        publishableKey: process.env.SBX_MMPAY_PUB_KEY!,
-        secretKey: process.env.SBX_MMPAY_SEC_KEY!,
-        apiBaseUrl: 'https://xxx.myanmyanpay.com', // Ask Our Team
-    });
-
-    const ProductionMMPay = MMPaySDK({
-        appId: process.env.PDX_MMPAY_APP_ID!,
-        publishableKey: process.env.PDX_MMPAY_PUB_KEY!,
-        secretKey: process.env.PDX_MMPAY_SEC_KEY!,
-        apiBaseUrl: 'https://xxx.myanmyanpay.com', // Ask Our Team
-    });
-
-    /**
-     * @Callback
-     */
-    export interface CallbackEncoded {
-        payloadString: string;
-        nonce: string;
-        signature: string;
-    }
-    /**
-     * @mmpayPlugin
-     */
-    export const mmpayPlugin = new Elysia({name: 'plugin.mmpay'})
-        .decorate('mmpay', {
-            /**
-             * createSandboxPayment
-             * @param {string} orderId
-             * @param {number} amount
-             * @returns
-             */
-            async createSandboxPayment(orderId: string, amount: number, items: any) {
-                return await SandboxMMPay.sandboxPay({
-                    amount,
-                    orderId,
-                    items: items,
-                    currency: 'MMK'
-                });
-            },
-            /**
-             * verifySandboxCallback
-             * @param orderId
-             * @param amount
-             * @returns
-             */
-            async verifySandboxCallback(params: CallbackEncoded) {
-                return await SandboxMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
-            },
-            /**
-             * createProductionPayment
-             * @param {string} orderId
-             * @param {number} amount
-             * @returns
-             */
-            async createProductionPayment(orderId: string, amount: number, items: any) {
-                return await ProductionMMPay.pay({
-                    amount,
-                    orderId,
-                    items: items,
-                    currency: 'MMK'
-                });
-            },
-            /**
-             * verifyProductionCallback
-             * @param {CallbackEncoded} params
-             * @param {string} params.nonce
-             * @param {string} params.signature
-             * @returns {Promise<boolean>}
-             */
-            async verifyProductionCallback(params: CallbackEncoded) {
-                return await ProductionMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
-            }
-        });
-
-    ```
+```
