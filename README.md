@@ -224,7 +224,7 @@ app.post("/callback", async (req, res) => {
     const incomingSignature = req.headers('x-mmpay-signature');
     const incomingNonce = req.headers('x-mmpay-nonce');
     const payload = request.body;
-    const { payloadString } = req.body;
+    const payloadString = JSON.stringify(payload);
     const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
     if (cbResponse) {
         if (payload.status === "SUCCESS" && payload.condition === "PRISTINE") {

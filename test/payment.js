@@ -33,7 +33,7 @@ async function start() {
       orderId: orderId,
       amount: 1500,
       currency: "MMK",
-      customMessage: "MyanMyanPay Is The Best",
+      // customMessage: "MyanMyanPay Is The Best",
       items: [{ name: "Items", amount: 3000, quantity: 1 }]
     };
     const response = await MMPay.sandboxPay(payload);
