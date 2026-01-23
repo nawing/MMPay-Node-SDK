@@ -39,7 +39,7 @@ let options = {
     { name: "Pencil", amount: 5000, quantity: 1 }
   ],
   customMessage: '', // max 150 char  string
-  callbackUrl: 'https://abcdef/callback' // overrides default callbackURL
+  callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
 }
 // sync
 MMPay.pay(options)
@@ -113,7 +113,7 @@ let options = {
     { name: "Pencil", amount: 5000, quantity: 1 }
   ],
   customMessage: '', // max 150 char  string
-  callbackUrl: 'https://abcdef/callback' // overrides default callbackURL
+  callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
 }
 // sync
 MMPay.sandboxPay(options)
@@ -157,6 +157,27 @@ app.post("/callback", async (req, res) => {
 });
 ```
 
+## Error Codes
+
+##### Api Key Layer Authentication [SERVER SDK]
+| Code | Description |
+| :--- | :--- |
+| **`KA0001`** | Bearer Token Not Included In Your Request |
+| **`KA0002`** | API Key Not 'LIVE' |
+| **`KA0003`** | Signature mismatch |
+| **`KA0004`** | Internal Server Error ( Talk to our support immediately fot this ) |
+| **`KA0005`** | IP Not whitelisted |
+| **`429`** | Ratelimit hit only 1000 request / minute allowed |
+
+
+##### JWT Layer Authentication [SERVER SDK]
+| Code | Description |
+| :--- | :--- |
+| **`BA001`** | `Btoken` is nonce one time token is not included |
+| **`BA002`** | `Btoken` one time nonce mismatch |
+| **`BA000`** | Internal Server Error ( Talk to our support immediately fot this ) |
+| **`429`**   | Ratelimit hit only 1000 request / minute allowed |
+
 
 
 ## 💡 Implementation IDEA
@@ -177,46 +198,52 @@ app.use(bodyParser.json());
 
 const { MMPaySDK } = require('mmpay-node-sdk');
 const MMPay = new MMPaySDK({
-  appId: "MMxxxxxxx",
-  publishableKey: "pk_test_abcxxxxx",
-  secretKey: "sk_test_abcxxxxx",
-  apiBaseUrl: "https://xxxxxx"
+    appId: "MMxxxxxxx",
+    publishableKey: "pk_test_abcxxxxx",
+    secretKey: "sk_test_abcxxxxx",
+    apiBaseUrl: "https://xxxxxx"
 })
 
 app.post("/create-order", async (req, res) => {
-  const { amount, items } = req.body;
-  const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
-  const payload = {
-    orderId: 'ORD-199399933',
-    amount: 5000,
-    items: [
-      { name: "Pencil", amount: 5000, quantity: 1 }
-    ]
-  }
-  let payResponse = await MMPay.pay(payload);
-  res.status(200).json(payResponse);
+    const { amount, items } = req.body;
+    const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
+    const payload = {
+        orderId: 'ORD-199399933',
+        amount: 5000,
+        items: [
+        { name: "Pencil", amount: 5000, quantity: 1 }
+        ],
+        customMessage: '', // max 150 char  string
+        callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
+    }
+    let payResponse = await MMPay.pay(payload);
+    res.status(200).json(payResponse);
 });
 // Validating Callback
 app.post("/callback", async (req, res) => {
-  const incomingSignature = req.headers('x-mmpay-signature');
-  const incomingNonce = req.headers('x-mmpay-nonce');
-  const { payloadString } = req.body;
-  const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
-  if (cbResponse) {
-    const parsedPayload = JSON.parse(payloadString);
-    if (parsedPayload.status === 'SUCCESS') {
-      // SUCCESS LOGIC HERE
+    const incomingSignature = req.headers('x-mmpay-signature');
+    const incomingNonce = req.headers('x-mmpay-nonce');
+    const payload = request.body;
+    const { payloadString } = req.body;
+    const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
+    if (cbResponse) {
+        if (payload.status === "SUCCESS" && payload.condition === "PRISTINE") {
+
+        }
+        if (payload.status === 'FAILED' && payload.condition === "PRISTINE") {
+
+        };
+        if (payload.status === 'REFUNDED' && payload.condition === "PRISTINE") {
+
+        };
+        res.status(200).json({ message: "Success" });
     }
-    if (parsedPayload.status !== 'SUCCESS') {
-      // NOT SUCCESS LOGIC HERE
+    if (!cbResponse) {
+        return res.status(500).json({ error: 'Callback Verification Fail' });
     }
-  }
-  if (!cbResponse) {
-    return res.status(500).json({ error: 'Callback Verification Fail' });
-  }
-  res.status(200).json({ message: "Success" });
 });
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
 ```
 
 #### FastifyJS With Plugin Usage Full Example (Fast)
@@ -225,6 +252,8 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
 ```typescript
 // server.ts
+import {mmpayPlugin} from './plugins/mmpayPlugin';
+
 interface MMPayIncomingCallbackScheme {
     orderId: string;
     amount: number;
@@ -237,8 +266,6 @@ interface MMPayIncomingCallbackScheme {
     callbackUrl?: string;
     customMessage?: string;
 }
-
-import {mmpayPlugin} from './plugins/mmpayPlugin';
 
 const fastify: FastifyInstance = Fastify({ logger: true });
 
@@ -268,11 +295,13 @@ fastify.post('/webhooks/mmpay', async (request: FastifyRequest<{Body: any}>, rep
     });
 
     if (cbResult) {
-        if (payload.status === "SUCCESS") {
+        if (payload.status === "SUCCESS" && payload.condition === "PRISTINE") {
 
         }
-        if (payload.status === 'FAILED') {
+        if (payload.status === 'FAILED' && payload.condition === "PRISTINE") {
 
+        };
+        if (payload.status === 'REFUNDED' && payload.condition === "PRISTINE") {
 
         };
         reply.code(200).send({message: "Callback Processed Successfully"});
@@ -475,12 +504,20 @@ const app = new Elysia()
             signature: incomingSignature
         });
         if (cbResult) {
-            if (payload.status === 'SUCCESS') {
-                // Do Success
+            if (payload.status === "SUCCESS" && payload.condition === "PRISTINE") {
+
             }
-            if (payload.status === 'FAILED') {
-                // Do Fail
-            }
+            if (payload.status === 'FAILED' && payload.condition === "PRISTINE") {
+
+            };
+            if (payload.status === 'REFUNDED' && payload.condition === "PRISTINE") {
+
+            };
+            reply.code(200).send({message: "Callback Processed Successfully"});
+        }
+
+        if (!cbResult) {
+            reply.code(200).send({message: "Callback Verification Failed"});
         }
     })
     .post('/webhooks/mmpay-sandbox', async ({body, headers, mmpay}) => {
@@ -494,12 +531,20 @@ const app = new Elysia()
             signature: incomingSignature
         });
         if (cbResult) {
-            if (payload.status === 'SUCCESS') {
-                // Do Success
+            if (payload.status === "SUCCESS" && payload.condition === "PRISTINE") {
+
             }
-            if (payload.status === 'FAILED') {
-                // Do Fail
-            }
+            if (payload.status === 'FAILED' && payload.condition === "PRISTINE") {
+
+            };
+            if (payload.status === 'REFUNDED' && payload.condition === "PRISTINE") {
+
+            };
+            reply.code(200).send({message: "Callback Processed Successfully"});
+        }
+
+        if (!cbResult) {
+            reply.code(200).send({message: "Callback Verification Failed"});
         }
     })
 ```
@@ -537,20 +582,6 @@ export interface CallbackEncoded {
     nonce: string;
     signature: string;
 }
-
-export interface MMPayIncomingCallbackScheme {
-    orderId: string;
-    amount: number;
-    method: string;
-    currency: string;
-    vendor: string;
-    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
-    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
-    transactionRefId: string;
-    callbackUrl?: string;
-    customMessage?: string;
-}
-
 /**
  * @PaymentCreateResponse
  */
@@ -589,7 +620,7 @@ export const mmpayPlugin = new Elysia({name: 'plugin.mmpay'})
          * @param amount
          * @returns
          */
-        async verifySandboxCallback(params: CallbackEncoded): Promise<MMPayIncomingCallbackScheme> {
+        async verifySandboxCallback(params: CallbackEncoded): Promise<boolean> {
             return await SandboxMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
         },
         /**
@@ -614,7 +645,7 @@ export const mmpayPlugin = new Elysia({name: 'plugin.mmpay'})
          * @param {string} params.signature
          * @returns {Promise<boolean>}
          */
-        async verifyProductionCallback(params: CallbackEncoded): Promise<MMPayIncomingCallbackScheme> {
+        async verifyProductionCallback(params: CallbackEncoded): Promise<boolean> {
             return await ProductionMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
         }
     });
