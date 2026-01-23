@@ -221,10 +221,10 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
 #### FastifyJS With Plugin Usage Full Example (Fast)
 
-=== "server.ts"
+<!-- === "server.ts" -->
 
     ```typescript
-
+    // server.ts
     interface MMPayIncomingCallbackScheme {
         orderId: string;
         amount: number;
@@ -251,8 +251,8 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
     });
 
     fastify.post('/create-order', async (request: FastifyRequest, reply: FastifyReply) => {
-        const { amount, orderId, items } = body;
-        const payResponse = await fastify.mmpay.createProductionPayment({ amount, orderId, items });
+        const { amount, orderId, items, customMessage } = body;
+        const payResponse = await fastify.mmpay.createProductionPayment({ amount, orderId, items, customMessage });
     })
 
     fastify.post('/webhooks/mmpay', async (request: FastifyRequest<{Body: any}>, reply: FastifyReply) => {
@@ -284,9 +284,10 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
     });
     ```
 
-=== "plguins/mmpayPlugin.ts"
+<!-- === "plguins/mmpayPlugin.ts" -->
 
     ```typescript
+    // plguins/mmpayPlugin.ts
     /**
      * MMpay FastifyJS Plugin
      * @author          [NawIng]
@@ -309,7 +310,8 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
     export interface CreatePaymentRequest {
         amount: number;
         orderId: string;
-        items: IOrderedItem[];
+        items?: IOrderedItem[];
+        customMessage?: string;
     }
     /**
      * @PaymentCreateResponse
@@ -375,7 +377,8 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
                 orderId: params.orderId,
                 currency: 'MMK',
                 amount: params.amount,
-                items: params.items
+                items: params.items,
+                customMessage: params.customMessage,
             }
             return await SandBoxMMPay.sandboxPay(options);
         }
@@ -399,7 +402,8 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
                 orderId: params.orderId,
                 currency: 'MMK',
                 amount: params.amount,
-                items: params.items
+                items: params.items,
+                customMessage: params.customMessage,
             }
             return await ProductionMMPay.pay(options);
         };
@@ -429,9 +433,10 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
 #### ElysiaJS With Plugin Usage Full Example (Bun Native - Extremely Fast)
 
-=== "server.ts"
+<!-- === "server.ts" -->
 
     ```typescript
+    // server.ts
     //usage example
     import {Elysia} from 'elysia';
     import {mmpayPlugin} from './plugins/mmpayPlugin';
@@ -499,9 +504,10 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
         })
     ```
 
-=== "plugins/mmpayPlugin.ts"
+<!-- === "plugins/mmpayPlugin.ts" -->
 
     ```typescript
+    // plguins/mmpayPlugin.ts
     /**
      * MMpay ElysiaJS Plugin
      * @author          [NawIng]
@@ -531,6 +537,31 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
         nonce: string;
         signature: string;
     }
+
+    export interface MMPayIncomingCallbackScheme {
+        orderId: string;
+        amount: number;
+        method: string;
+        currency: string;
+        vendor: string;
+        status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+        condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+        transactionRefId: string;
+        callbackUrl?: string;
+        customMessage?: string;
+    }
+
+    /**
+     * @PaymentCreateResponse
+     */
+    export interface PaymentCreateResponse {
+        orderId: string;
+        amount: number;
+        currency?: string;
+        transactionRefId?: string;
+        qr: string;
+    }
+
     /**
      * @mmpayPlugin
      */
@@ -540,14 +571,16 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
              * createSandboxPayment
              * @param {string} orderId
              * @param {number} amount
+             * @param {string} customMessage
+             * @param {any[]} items
              * @returns
              */
-            async createSandboxPayment(orderId: string, amount: number, items: any) {
+            async createSandboxPayment(orderId: string, amount: number,  customMessage: string, items: any ): Promise <PaymentCreateResponse> {
                 return await SandboxMMPay.sandboxPay({
                     amount,
                     orderId,
-                    items: items,
-                    currency: 'MMK'
+                    customMessage,
+                    items,
                 });
             },
             /**
@@ -556,21 +589,22 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
              * @param amount
              * @returns
              */
-            async verifySandboxCallback(params: CallbackEncoded) {
+            async verifySandboxCallback(params: CallbackEncoded): Promise<MMPayIncomingCallbackScheme> {
                 return await SandboxMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
             },
             /**
              * createProductionPayment
              * @param {string} orderId
              * @param {number} amount
+             * @param {any[]} items
              * @returns
              */
-            async createProductionPayment(orderId: string, amount: number, items: any) {
+            async createProductionPayment(orderId: string, amount: number, customMessage: string, items: any): Promise <PaymentCreateResponse>  {
                 return await ProductionMMPay.pay({
                     amount,
                     orderId,
-                    items: items,
-                    currency: 'MMK'
+                    customMessage,
+                    items,
                 });
             },
             /**
@@ -580,7 +614,7 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
              * @param {string} params.signature
              * @returns {Promise<boolean>}
              */
-            async verifyProductionCallback(params: CallbackEncoded) {
+            async verifyProductionCallback(params: CallbackEncoded): Promise<MMPayIncomingCallbackScheme> {
                 return await ProductionMMPay.verifyCb(params.payloadString, params.nonce, params.signature);
             }
         });
