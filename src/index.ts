@@ -6,7 +6,8 @@ export interface PaymentRequest {
   amount: number;
   currency?: string;
   callbackUrl?: string;
-  items: Item[]
+  customMessage?: string;
+  items?: Item[];
 }
 
 export interface XPaymentRequest extends PaymentRequest {
@@ -30,17 +31,16 @@ export interface PaymentResponse {
 }
 
 export interface CallbackIncomingData {
-  appId: string;
   orderId: string;
   amount: number;
+  method: string;
   currency: string;
-  method?: string;
-  vendor?: string;
+  vendor: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+  transactionRefId: string;
   callbackUrl?: string;
-  items: {name: string, amount: number, quantity: number}[];
-  merchantId: string;
-  status: 'PENDING' | 'SUCCESS' | 'FAILED';
-  createdAt: string;
+  customMessage?: string;
 }
 
 export interface HandShakeRequest {
@@ -163,6 +163,7 @@ class MMPaySdkClass {
       amount: params.amount,
       orderId: params.orderId,
       callbackUrl: params.callbackUrl,
+      customMessage: params.customMessage,
       items: params.items,
     };
     const bodyString = JSON.stringify(_xpayload);
@@ -237,6 +238,7 @@ class MMPaySdkClass {
       amount: params.amount,
       orderId: params.orderId,
       callbackUrl: params.callbackUrl,
+      customMessage: params.customMessage,
       items: params.items,
     };
     const bodyString = JSON.stringify(_xpayload);

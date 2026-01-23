@@ -31,15 +31,16 @@ async function start() {
   try {
     const payload = {
       orderId: orderId,
-      amount: 3000,
+      amount: 1500,
       currency: "MMK",
+      customMessage: "MyanMyanPay Is The Best",
       items: [{ name: "Items", amount: 3000, quantity: 1 }]
     };
     const response = await MMPay.sandboxPay(payload);
     const endTime = performance.now();
     const latencyMs = (endTime - startTime).toFixed(3);
 
-    console.log(`\n--- Transaction Successful ---`);
+    console.log(`\n--- Transaction Request Successful ---`);
     console.log(`Order ID: ${orderId}`);
     console.log(`**Network Latency: ${latencyMs} ms**`);
     console.log(`Response:`, response);
@@ -49,7 +50,7 @@ async function start() {
   } catch (error) {
     const endTime = performance.now();
     const latencyMs = (endTime - startTime).toFixed(3);
-    console.error(`\n--- Transaction Failed ---`);
+    console.error(`\n--- Transaction Request Failed ---`);
     console.error(`Order ID: ${orderId}`);
     console.error(`**Network Latency: ${latencyMs} ms**`);
     console.error(`Error Message: ${error.message}`);

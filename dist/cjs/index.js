@@ -116,6 +116,7 @@ class MMPaySdkClass {
             amount: params.amount,
             orderId: params.orderId,
             callbackUrl: params.callbackUrl,
+            customMessage: params.customMessage,
             items: params.items,
         };
         const bodyString = JSON.stringify(_xpayload);
@@ -185,6 +186,7 @@ class MMPaySdkClass {
             amount: params.amount,
             orderId: params.orderId,
             callbackUrl: params.callbackUrl,
+            customMessage: params.customMessage,
             items: params.items,
         };
         const bodyString = JSON.stringify(_xpayload);

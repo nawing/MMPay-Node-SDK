@@ -3,6 +3,7 @@ export interface PaymentRequest {
     amount: number;
     currency?: string;
     callbackUrl?: string;
+    customMessage?: string;
     items: Item[];
 }
 export interface XPaymentRequest extends PaymentRequest {
@@ -23,21 +24,16 @@ export interface PaymentResponse {
     url: string;
 }
 export interface CallbackIncomingData {
-    appId: string;
     orderId: string;
     amount: number;
+    method: string;
     currency: string;
-    method?: string;
-    vendor?: string;
+    vendor: string;
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+    transactionRefId: string;
     callbackUrl?: string;
-    items: {
-        name: string;
-        amount: number;
-        quantity: number;
-    }[];
-    merchantId: string;
-    status: 'PENDING' | 'SUCCESS' | 'FAILED';
-    createdAt: string;
+    customMessage?: string;
 }
 export interface HandShakeRequest {
     orderId: string;

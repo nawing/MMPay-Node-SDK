@@ -1,9 +1,10 @@
 export interface PaymentRequest {
     orderId: string;
     amount: number;
-    currency?: string;
     callbackUrl?: string;
-    items: Item[];
+    customMessage?: string;
+    currency?: string = "MMK";
+    items?: Item[];
 }
 export interface XPaymentRequest extends PaymentRequest {
     appId?: string;
@@ -23,21 +24,16 @@ export interface PaymentResponse {
     url: string;
 }
 export interface CallbackIncomingData {
-    appId: string;
     orderId: string;
     amount: number;
+    method: string;
     currency: string;
-    method?: string;
-    vendor?: string;
+    vendor: string;
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+    transactionRefId: string;
     callbackUrl?: string;
-    items: {
-        name: string;
-        amount: number;
-        quantity: number;
-    }[];
-    merchantId: string;
-    status: 'PENDING' | 'SUCCESS' | 'FAILED';
-    createdAt: string;
+    customMessage?: string;
 }
 export interface HandShakeRequest {
     orderId: string;
@@ -137,4 +133,5 @@ declare class MMPaySdkClass {
      */
     verifyCb(payload: string, nonce: string, expectedSignature: string): Promise<boolean>;
 }
-export {};
+export { };
+
