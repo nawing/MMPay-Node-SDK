@@ -32,7 +32,6 @@ async function start() {
     const payload = {
       orderId: orderId,
       amount: 1500,
-      currency: "MMK",
       // customMessage: "MyanMyanPay Is The Best",
       items: [{ name: "Items", amount: 3000, quantity: 1 }]
     };
