@@ -1,10 +1,33 @@
+export interface PayGetRequest {
+    orderId: string;
+    nonce: string;
+}
+export interface PayGetResponse {
+    appId: string;
+    orderId: string;
+    amount: number;
+    vendor?: string;
+    method: 'QR' | 'PIN' | 'PWA' | 'CARD';
+    customMessage?: string;
+    callbackUrl?: string;
+    callbackUrlStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+    callbackAt?: Date;
+    disbursementId?: string;
+    disStatus?: 'NONE' | 'REQUESTED' | 'SUCCESS' | 'FAILED';
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+    createdAt: Date;
+    transactionRefId?: string;
+    qr?: string;
+    url?: string;
+}
 export interface PaymentRequest {
     orderId: string;
     amount: number;
     currency?: string;
     callbackUrl?: string;
     customMessage?: string;
-    items: Item[];
+    items?: Item[];
 }
 export interface XPaymentRequest extends PaymentRequest {
     appId?: string;
@@ -105,6 +128,13 @@ declare class MMPaySdkClass {
      */
     sandboxPay(params: PaymentRequest): Promise<PaymentResponse>;
     /**
+     * sandboxGet
+     * @param {PayGetRequest} params
+     * @param {string} params.orderId
+     * @returns {Promise<PayGetResponse>}
+     */
+    sandboxGet(params: PayGetRequest): Promise<PayGetResponse>;
+    /**
      * @Production_Environment
      * @Production_Environment
      * @Production_Environment
@@ -124,6 +154,13 @@ declare class MMPaySdkClass {
      * @returns {Promise<PaymentResponse>}
      */
     pay(params: PaymentRequest): Promise<PaymentResponse>;
+    /**
+     * get
+     * @param {PayGetRequest} params
+     * @param {string} params.orderId
+     * @returns {Promise<PayGetResponse>}
+     */
+    get(params: PayGetRequest): Promise<PayGetResponse>;
     /**
      * verifyCb
      * @param {string} payload

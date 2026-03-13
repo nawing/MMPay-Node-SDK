@@ -1,6 +1,31 @@
 import axios from 'axios';
 import CryptoJS from 'crypto-js';
 
+export interface PayGetRequest {
+  orderId: string;
+  nonce: string;
+}
+
+export interface PayGetResponse {
+  appId: string;
+  orderId: string;
+  amount: number;
+  vendor?: string;    // KBZPay | AYA Pay | uab pay | Wave Pay
+  method: 'QR' | 'PIN' | 'PWA' | 'CARD';
+  customMessage?: string;
+  callbackUrl?: string;
+  callbackUrlStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'; // CALLBACK STATUS
+  callbackAt?: Date;
+  disbursementId?: string;
+  disStatus?: 'NONE' | 'REQUESTED' | 'SUCCESS' | 'FAILED'; // DISBURSEMENT SETTLED OR NOT
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';   // CUSTOMER REALLY PAID OR NOT
+  condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED'; // QR IS SCANNED OR NOT
+  createdAt: Date;
+  transactionRefId?: string;
+  qr?: string;
+  url?: string;
+}
+
 export interface PaymentRequest {
   orderId: string;
   amount: number;
@@ -184,10 +209,37 @@ class MMPaySdkClass {
       return error
     }
   }
-
-
-
-
+  /**
+   * sandboxGet
+   * @param {PayGetRequest} params
+   * @param {string} params.orderId
+   * @returns {Promise<PayGetResponse>}
+   */
+  async sandboxGet(params: PayGetRequest): Promise<PayGetResponse> {
+    const endpoint = `${this.#apiBaseUrl}/payments/sandbox-get`;
+    const nonce = Date.now().toString();
+    let _xpayload: PayGetRequest = {
+      orderId: params.orderId,
+      nonce: nonce
+    };
+    const bodyString = JSON.stringify(_xpayload);
+    const signature = this._generateSignature(bodyString, nonce);
+    await this.sandboxHandShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    try {
+      const response = await axios.post(endpoint, _xpayload, {
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Btoken': this.#btoken,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      return response.data as PayGetResponse;
+    } catch (error) {
+      return error
+    }
+  }
 
 
 
@@ -259,6 +311,39 @@ class MMPaySdkClass {
       return error
     }
   }
+  /**
+   * get
+   * @param {PayGetRequest} params
+   * @param {string} params.orderId
+   * @returns {Promise<PayGetResponse>}
+   */
+  async get(params: PayGetRequest): Promise<PayGetResponse> {
+    const endpoint = `${this.#apiBaseUrl}/payments/get`;
+    const nonce = Date.now().toString();
+    let _xpayload: PayGetRequest = {
+      orderId: params.orderId,
+      nonce: nonce
+    };
+    const bodyString = JSON.stringify(_xpayload);
+    const signature = this._generateSignature(bodyString, nonce);
+    await this.handShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    try {
+      const response = await axios.post(endpoint, _xpayload, {
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Btoken': this.#btoken,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      return response.data as PayGetResponse;
+    } catch (error) {
+      return error
+    }
+  }
+
+
   /**
    * verifyCb
    * @param {string} payload

@@ -32,8 +32,8 @@ async function start() {
     const payload = {
       orderId: orderId,
       amount: 1500,
-      // customMessage: "MyanMyanPay Is The Best",
-      items: [{ name: "Items", amount: 3000, quantity: 1 }]
+      customMessage: "MyanMyanPay Is The Best",
+      items: [{ name: "Items", amount: 1500, quantity: 1 }]
     };
     const response = await MMPay.sandboxPay(payload);
     const endTime = performance.now();
