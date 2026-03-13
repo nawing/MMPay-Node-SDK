@@ -20,18 +20,23 @@ async function generateSecureRandomString(length) {
  * Executes the payment call and measures network latency.
  */
 async function start() {
+
+  // console.log(
+  //   process.env.PUB_KEY,
+  //   process.env.SEC_KEY,
+  // )
+
   const MMPay = MMPaySDK({
     appId: process.env.APP_ID,
     publishableKey: process.env.PUB_KEY,
     secretKey: process.env.SEC_KEY,
     apiBaseUrl: process.env.BASEURL
   });
-  const orderId = await generateSecureRandomString(6);
+  const orderId = "tshopmm_1768380059154"
   const startTime = performance.now();
   try {
     const payload = {
-      // orderId: orderId,
-      orderId: "tshopmm_1768380059154"
+      orderId
     };
     const response = await MMPay.sandboxGet(payload);
     const endTime = performance.now();

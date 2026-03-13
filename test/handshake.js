@@ -3,7 +3,8 @@
 const { performance } = require('perf_hooks');
 const { MMPaySDK } = require("../dist/cjs/index");
 const dotenv = require("dotenv");
-dotenv.config()
+dotenv.config();
+
 /**
  * generateSecureRandomString
  * @param {number} length The desired length of the final string.
@@ -19,6 +20,12 @@ async function generateSecureRandomString(length) {
  * Executes the payment call and measures network latency.
  */
 async function start() {
+
+  // console.log(
+  //   process.env.PUB_KEY,
+  //   process.env.SEC_KEY,
+  // )
+
   const MMPay = MMPaySDK({
     appId: process.env.APP_ID,
     publishableKey: process.env.PUB_KEY,
