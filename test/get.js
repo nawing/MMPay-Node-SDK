@@ -28,17 +28,17 @@ async function start() {
 
   const MMPay = MMPaySDK({
     appId: process.env.APP_ID,
-    publishableKey: process.env.PUB_KEY,
-    secretKey: process.env.SEC_KEY,
+    publishableKey: process.env.PRD_PUB_KEY,
+    secretKey: process.env.PRD_SEC_KEY,
     apiBaseUrl: process.env.BASEURL
   });
-  const orderId = "tshopmm_1768380059154"
+  const orderId = "changeThisOrderIDHere"
   const startTime = performance.now();
   try {
     const payload = {
       orderId
     };
-    const response = await MMPay.sandboxGet(payload);
+    const response = await MMPay.get(payload);
     const endTime = performance.now();
     const latencyMs = (endTime - startTime).toFixed(3);
 
@@ -55,7 +55,7 @@ async function start() {
     console.error(`\n--- Transaction Request Failed ---`);
     console.error(`Order ID: ${orderId}`);
     console.error(`**Network Latency: ${latencyMs} ms**`);
-    console.error(`Error Message: ${error.message}`);
+    console.error(error)
     console.error(`--------------------------\n`);
   }
 }

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import CryptoJS from 'crypto-js';
 
 export interface PayGetRequest {
@@ -10,16 +9,16 @@ export interface PayGetResponse {
   appId: string;
   orderId: string;
   amount: number;
-  vendor?: string;    // KBZPay | AYA Pay | uab pay | Wave Pay
+  vendor?: string;
   method: 'QR' | 'PIN' | 'PWA' | 'CARD';
   customMessage?: string;
   callbackUrl?: string;
-  callbackUrlStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'; // CALLBACK STATUS
+  callbackUrlStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
   callbackAt?: Date;
   disbursementId?: string;
-  disStatus?: 'NONE' | 'REQUESTED' | 'SUCCESS' | 'FAILED'; // DISBURSEMENT SETTLED OR NOT
-  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';   // CUSTOMER REALLY PAID OR NOT
-  condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED'; // QR IS SCANNED OR NOT
+  disStatus?: 'NONE' | 'REQUESTED' | 'SUCCESS' | 'FAILED';
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
   createdAt: Date;
   transactionRefId?: string;
   qr?: string;
@@ -72,15 +71,11 @@ export interface HandShakeRequest {
   orderId: string;
   nonce: string;
 }
+
 export interface HandShakeResponse {
   token: string;
 }
 
-/**
- * @SDKOptions
- * @SDKOptions
- * @SDKOptions
- */
 export interface SDKOptions {
   appId: string;
   publishableKey: string;
@@ -88,13 +83,6 @@ export interface SDKOptions {
   apiBaseUrl: string;
 }
 
-/**
- * MMPaySDK
- * @param {string} appId
- * @param {string} publishableKey
- * @param {string} secretKey
- * @returns {MMPayNodeSdkClass}
- */
 export function MMPaySDK(options: SDKOptions): MMPaySdkClass {
   return new MMPaySdkClass({
     appId: options.appId,
@@ -103,51 +91,35 @@ export function MMPaySDK(options: SDKOptions): MMPaySdkClass {
     apiBaseUrl: options.apiBaseUrl,
   });
 }
-/**
- * @MMPaySdkClass
- */
+
 class MMPaySdkClass {
   readonly #appId: string;
   readonly #publishableKey: string;
   readonly #secretKey: string;
   readonly #apiBaseUrl: string;
 
+  #btoken!: string;
 
-  #btoken: string;
-  /**
-   * Initializes the SDK with the merchant's keys and the API endpoint.
-   * @param {string} appId
-   * @param {string} publishableKey
-   * @param {string} secretKey
-   */
   constructor(options: SDKOptions) {
     this.#appId = options.appId;
     this.#publishableKey = options.publishableKey;
     this.#secretKey = options.secretKey;
     this.#apiBaseUrl = options.apiBaseUrl;
   }
-  /**
-   * Generates an HMAC SHA256 signature for the request integrity check.
-   * @private
-   * @param {string} bodyString
-   * @param {string} nonce
-   * @returns {string}
-   */
+
   _generateSignature(bodyString: string, nonce: string): string {
     const stringToSign = `${nonce}.${bodyString}`;
     return CryptoJS.HmacSHA256(stringToSign, this.#secretKey).toString(CryptoJS.enc.Hex);
   }
 
+
   /**
-   * @Sandbox_Environment
-   * @Sandbox_Environment
-   * @Sandbox_Environment
+   * SANDBOX
    */
+
   /**
    * sandboxHandShake
    * @param {HandShakeRequest} payload
-   * @param {string} payload.orderId
-   * @param {string} payload.nonce
    * @returns {Promise<HandShakeResponse>}
    */
   async sandboxHandShake(payload: HandShakeRequest): Promise<HandShakeResponse> {
@@ -156,7 +128,9 @@ class MMPaySdkClass {
     const nonce = Date.now().toString();
     const signature = this._generateSignature(bodyString, nonce);
     try {
-      const response = await axios.post(endpoint, payload, {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
         headers: {
           'Authorization': `Bearer ${this.#publishableKey}`,
           'X-Mmpay-Nonce': nonce,
@@ -164,19 +138,17 @@ class MMPaySdkClass {
           'Content-Type': 'application/json',
         }
       });
-      this.#btoken = response.data.token;
-      return response.data as HandShakeResponse;
+      const data = await response.json();
+      if (!response.ok) throw data;
+      this.#btoken = data.token;
+      return data as HandShakeResponse;
     } catch (error) {
-      return error
+      return error as any;
     }
   }
   /**
    * sandboxPay
    * @param {PaymentRequest} params
-   * @param {string} params.orderId
-   * @param {number} params.amount
-   * @param {string} params.callbackUrl
-   * @param {Item[]} params.items
    * @returns {Promise<PaymentResponse>}
    */
   async sandboxPay(params: PaymentRequest): Promise<PaymentResponse> {
@@ -193,9 +165,11 @@ class MMPaySdkClass {
     };
     const bodyString = JSON.stringify(_xpayload);
     const signature = this._generateSignature(bodyString, nonce);
-    await this.sandboxHandShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    await this.sandboxHandShake({orderId: _xpayload.orderId as string, nonce: _xpayload.nonce as string});
     try {
-      const response = await axios.post(endpoint, _xpayload, {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
         headers: {
           'Authorization': `Bearer ${this.#publishableKey}`,
           'X-Mmpay-Btoken': this.#btoken,
@@ -204,16 +178,17 @@ class MMPaySdkClass {
           'Content-Type': 'application/json',
         }
       });
-      return response.data as PaymentResponse;
+      const data = await response.json();
+      if (!response.ok) throw data;
+      return data as PaymentResponse;
     } catch (error) {
-      return error
+      return error as any;
     }
   }
   /**
    * sandboxGet
    * @param {PayGetRequest} params
-   * @param {string} params.orderId
-   * @returns {Promise<PayGetResponse>}
+   * @returns {Promise<PayGetResponse> }
    */
   async sandboxGet(params: PayGetRequest): Promise<PayGetResponse> {
     const endpoint = `${this.#apiBaseUrl}/payments/sandbox-get`;
@@ -226,7 +201,9 @@ class MMPaySdkClass {
     const signature = this._generateSignature(bodyString, nonce);
     await this.sandboxHandShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
     try {
-      const response = await axios.post(endpoint, _xpayload, {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
         headers: {
           'Authorization': `Bearer ${this.#publishableKey}`,
           'X-Mmpay-Btoken': this.#btoken,
@@ -235,19 +212,21 @@ class MMPaySdkClass {
           'Content-Type': 'application/json',
         }
       });
-      return response.data as PayGetResponse;
+      const data = await response.json();
+      if (!response.ok) throw data;
+      return data as PayGetResponse;
     } catch (error) {
-      return error
+      return error as any;
     }
   }
 
 
 
+
   /**
-   * @Production_Environment
-   * @Production_Environment
-   * @Production_Environment
+   * PRODUCTION
    */
+
   /**
    * handShake
    * @param {HandShakeRequest} payload
@@ -259,7 +238,9 @@ class MMPaySdkClass {
     const nonce = Date.now().toString();
     const signature = this._generateSignature(bodyString, nonce);
     try {
-      const response = await axios.post(endpoint, payload, {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
         headers: {
           'Authorization': `Bearer ${this.#publishableKey}`,
           'X-Mmpay-Nonce': nonce,
@@ -267,18 +248,17 @@ class MMPaySdkClass {
           'Content-Type': 'application/json',
         }
       });
-      this.#btoken = response.data.token;
-      return response.data as HandShakeResponse;
+      const data = await response.json();
+      if (!response.ok) throw data;
+      this.#btoken = data.token;
+      return data as HandShakeResponse;
     } catch (error) {
-      return error
+      return error as any;
     }
   }
   /**
    * pay
-   * @param {PaymentRequest} params - The data for the payment.
-   * @param {string} params.orderId
-   * @param {number} params.amount
-   * @param {Item[]} params.items
+   * @param {PaymentRequest} params
    * @returns {Promise<PaymentResponse>}
    */
   async pay(params: PaymentRequest): Promise<PaymentResponse> {
@@ -295,9 +275,11 @@ class MMPaySdkClass {
     };
     const bodyString = JSON.stringify(_xpayload);
     const signature = this._generateSignature(bodyString, nonce);
-    await this.handShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    await this.handShake({orderId: _xpayload.orderId as string, nonce: _xpayload.nonce as string});
     try {
-      const response = await axios.post(endpoint, _xpayload, {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
         headers: {
           'Authorization': `Bearer ${this.#publishableKey}`,
           'X-Mmpay-Btoken': this.#btoken,
@@ -306,16 +288,17 @@ class MMPaySdkClass {
           'Content-Type': 'application/json',
         }
       });
-      return response.data as PaymentResponse;
+      const data = await response.json();
+      if (!response.ok) throw data;
+      return data as PaymentResponse;
     } catch (error) {
-      return error
+      return error as any;
     }
   }
   /**
    * get
    * @param {PayGetRequest} params
-   * @param {string} params.orderId
-   * @returns {Promise<PayGetResponse>}
+   * @returns {Promise<PayGetResponse> }
    */
   async get(params: PayGetRequest): Promise<PayGetResponse> {
     const endpoint = `${this.#apiBaseUrl}/payments/get`;
@@ -328,7 +311,9 @@ class MMPaySdkClass {
     const signature = this._generateSignature(bodyString, nonce);
     await this.handShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
     try {
-      const response = await axios.post(endpoint, _xpayload, {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
         headers: {
           'Authorization': `Bearer ${this.#publishableKey}`,
           'X-Mmpay-Btoken': this.#btoken,
@@ -337,13 +322,13 @@ class MMPaySdkClass {
           'Content-Type': 'application/json',
         }
       });
-      return response.data as PayGetResponse;
+      const data = await response.json();
+      if (!response.ok) throw data;
+      return data as PayGetResponse;
     } catch (error) {
-      return error
+      return error as any;
     }
   }
-
-
   /**
    * verifyCb
    * @param {string} payload

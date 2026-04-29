@@ -21,18 +21,18 @@ async function generateSecureRandomString(length) {
  */
 async function start() {
 
-  // console.log(
-  //   process.env.PUB_KEY,
-  //   process.env.SEC_KEY,
-  // )
-
   const MMPay = MMPaySDK({
     appId: process.env.APP_ID,
-    publishableKey: process.env.PUB_KEY,
-    secretKey: process.env.SEC_KEY,
+    publishableKey: process.env.SBX_PUB_KEY,
+    secretKey: process.env.SBX_SEC_KEY,
     apiBaseUrl: process.env.BASEURL
   });
   const startTime = performance.now();
+
+
+  // console.log(process.env.PUB_KEY)
+  // console.log(process.env.SEC_KEY)
+
   try {
     const payload = {
       orderId: (await generateSecureRandomString(6)).toString(),

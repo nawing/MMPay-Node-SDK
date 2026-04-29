@@ -65,79 +65,40 @@ export interface HandShakeRequest {
 export interface HandShakeResponse {
     token: string;
 }
-/**
- * @SDKOptions
- * @SDKOptions
- * @SDKOptions
- */
 export interface SDKOptions {
     appId: string;
     publishableKey: string;
     secretKey: string;
     apiBaseUrl: string;
 }
-/**
- * MMPaySDK
- * @param {string} appId
- * @param {string} publishableKey
- * @param {string} secretKey
- * @returns {MMPayNodeSdkClass}
- */
 export declare function MMPaySDK(options: SDKOptions): MMPaySdkClass;
-/**
- * @MMPaySdkClass
- */
 declare class MMPaySdkClass {
     #private;
-    /**
-     * Initializes the SDK with the merchant's keys and the API endpoint.
-     * @param {string} appId
-     * @param {string} publishableKey
-     * @param {string} secretKey
-     */
     constructor(options: SDKOptions);
-    /**
-     * Generates an HMAC SHA256 signature for the request integrity check.
-     * @private
-     * @param {string} bodyString
-     * @param {string} nonce
-     * @returns {string}
-     */
     _generateSignature(bodyString: string, nonce: string): string;
     /**
-     * @Sandbox_Environment
-     * @Sandbox_Environment
-     * @Sandbox_Environment
+     * SANDBOX
      */
     /**
      * sandboxHandShake
      * @param {HandShakeRequest} payload
-     * @param {string} payload.orderId
-     * @param {string} payload.nonce
      * @returns {Promise<HandShakeResponse>}
      */
     sandboxHandShake(payload: HandShakeRequest): Promise<HandShakeResponse>;
     /**
      * sandboxPay
      * @param {PaymentRequest} params
-     * @param {string} params.orderId
-     * @param {number} params.amount
-     * @param {string} params.callbackUrl
-     * @param {Item[]} params.items
      * @returns {Promise<PaymentResponse>}
      */
     sandboxPay(params: PaymentRequest): Promise<PaymentResponse>;
     /**
      * sandboxGet
      * @param {PayGetRequest} params
-     * @param {string} params.orderId
-     * @returns {Promise<PayGetResponse>}
+     * @returns {Promise<PayGetResponse> }
      */
     sandboxGet(params: PayGetRequest): Promise<PayGetResponse>;
     /**
-     * @Production_Environment
-     * @Production_Environment
-     * @Production_Environment
+     * PRODUCTION
      */
     /**
      * handShake
@@ -147,25 +108,21 @@ declare class MMPaySdkClass {
     handShake(payload: HandShakeRequest): Promise<HandShakeResponse>;
     /**
      * pay
-     * @param {PaymentRequest} params - The data for the payment.
-     * @param {string} params.orderId
-     * @param {number} params.amount
-     * @param {Item[]} params.items
+     * @param {PaymentRequest} params
      * @returns {Promise<PaymentResponse>}
      */
     pay(params: PaymentRequest): Promise<PaymentResponse>;
     /**
      * get
      * @param {PayGetRequest} params
-     * @param {string} params.orderId
-     * @returns {Promise<PayGetResponse>}
+     * @returns {Promise<PayGetResponse> }
      */
     get(params: PayGetRequest): Promise<PayGetResponse>;
     /**
      * verifyCb
-     * @param {string} payload
-     * @param {string} nonce
-     * @param {string} expectedSignature
+     * @param payload
+     * @param nonce
+     * @param expectedSignature
      * @returns {Promise<boolean>}
      */
     verifyCb(payload: string, nonce: string, expectedSignature: string): Promise<boolean>;
