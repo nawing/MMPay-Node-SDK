@@ -120,9 +120,9 @@ declare class MMPaySdkClass {
     get(params: PayGetRequest): Promise<PayGetResponse>;
     /**
      * verifyCb
-     * @param payload
-     * @param nonce
-     * @param expectedSignature
+     * @param {string} payload
+     * @param {string} nonce
+     * @param {string} expectedSignature
      * @returns {Promise<boolean>}
      */
     verifyCb(payload: string, nonce: string, expectedSignature: string): Promise<boolean>;

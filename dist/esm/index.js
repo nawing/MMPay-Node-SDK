@@ -10,7 +10,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _MMPaySdkClass_appId, _MMPaySdkClass_publishableKey, _MMPaySdkClass_secretKey, _MMPaySdkClass_apiBaseUrl, _MMPaySdkClass_btoken;
-import CryptoJS from 'crypto-js';
+import { createHmac } from 'node:crypto';
 export function MMPaySDK(options) {
     return new MMPaySdkClass({
         appId: options.appId,
@@ -33,7 +33,10 @@ class MMPaySdkClass {
     }
     _generateSignature(bodyString, nonce) {
         const stringToSign = `${nonce}.${bodyString}`;
-        return CryptoJS.HmacSHA256(stringToSign, __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f")).toString(CryptoJS.enc.Hex);
+        // Replaced CryptoJS with node:crypto
+        return createHmac('sha256', __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f"))
+            .update(stringToSign)
+            .digest('hex');
     }
     /**
      * SANDBOX
@@ -259,9 +262,9 @@ class MMPaySdkClass {
     }
     /**
      * verifyCb
-     * @param payload
-     * @param nonce
-     * @param expectedSignature
+     * @param {string} payload
+     * @param {string} nonce
+     * @param {string} expectedSignature
      * @returns {Promise<boolean>}
      */
     async verifyCb(payload, nonce, expectedSignature) {
@@ -269,7 +272,10 @@ class MMPaySdkClass {
             throw new Error("Callback verification failed: Missing payload, nonce, or signature.");
         }
         const stringToSign = `${nonce}.${payload}`;
-        const generatedSignature = CryptoJS.HmacSHA256(stringToSign, __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f")).toString(CryptoJS.enc.Hex);
+        // Replaced CryptoJS with node:crypto
+        const generatedSignature = createHmac('sha256', __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f"))
+            .update(stringToSign)
+            .digest('hex');
         if (generatedSignature !== expectedSignature) {
             console.error('Signature mismatch:', { generatedSignature, expectedSignature });
         }

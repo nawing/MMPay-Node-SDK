@@ -10,13 +10,10 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 var _MMPaySdkClass_appId, _MMPaySdkClass_publishableKey, _MMPaySdkClass_secretKey, _MMPaySdkClass_apiBaseUrl, _MMPaySdkClass_btoken;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MMPaySDK = MMPaySDK;
-const crypto_js_1 = __importDefault(require("crypto-js"));
+const node_crypto_1 = require("node:crypto");
 function MMPaySDK(options) {
     return new MMPaySdkClass({
         appId: options.appId,
@@ -39,7 +36,10 @@ class MMPaySdkClass {
     }
     _generateSignature(bodyString, nonce) {
         const stringToSign = `${nonce}.${bodyString}`;
-        return crypto_js_1.default.HmacSHA256(stringToSign, __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f")).toString(crypto_js_1.default.enc.Hex);
+        // Replaced CryptoJS with node:crypto
+        return (0, node_crypto_1.createHmac)('sha256', __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f"))
+            .update(stringToSign)
+            .digest('hex');
     }
     /**
      * SANDBOX
@@ -265,9 +265,9 @@ class MMPaySdkClass {
     }
     /**
      * verifyCb
-     * @param payload
-     * @param nonce
-     * @param expectedSignature
+     * @param {string} payload
+     * @param {string} nonce
+     * @param {string} expectedSignature
      * @returns {Promise<boolean>}
      */
     async verifyCb(payload, nonce, expectedSignature) {
@@ -275,7 +275,10 @@ class MMPaySdkClass {
             throw new Error("Callback verification failed: Missing payload, nonce, or signature.");
         }
         const stringToSign = `${nonce}.${payload}`;
-        const generatedSignature = crypto_js_1.default.HmacSHA256(stringToSign, __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f")).toString(crypto_js_1.default.enc.Hex);
+        // Replaced CryptoJS with node:crypto
+        const generatedSignature = (0, node_crypto_1.createHmac)('sha256', __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f"))
+            .update(stringToSign)
+            .digest('hex');
         if (generatedSignature !== expectedSignature) {
             console.error('Signature mismatch:', { generatedSignature, expectedSignature });
         }

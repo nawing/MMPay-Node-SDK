@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import {createHmac} from 'node:crypto';
 
 export interface PayGetRequest {
   orderId: string;
@@ -109,7 +109,10 @@ class MMPaySdkClass {
 
   _generateSignature(bodyString: string, nonce: string): string {
     const stringToSign = `${nonce}.${bodyString}`;
-    return CryptoJS.HmacSHA256(stringToSign, this.#secretKey).toString(CryptoJS.enc.Hex);
+    // Replaced CryptoJS with node:crypto
+    return createHmac('sha256', this.#secretKey)
+      .update(stringToSign)
+      .digest('hex');
   }
 
 
@@ -345,7 +348,12 @@ class MMPaySdkClass {
       throw new Error("Callback verification failed: Missing payload, nonce, or signature.");
     }
     const stringToSign = `${nonce}.${payload}`;
-    const generatedSignature = CryptoJS.HmacSHA256(stringToSign, this.#secretKey).toString(CryptoJS.enc.Hex);
+
+    // Replaced CryptoJS with node:crypto
+    const generatedSignature = createHmac('sha256', this.#secretKey)
+      .update(stringToSign)
+      .digest('hex');
+
     if (generatedSignature !== expectedSignature) {
       console.error('Signature mismatch:', {generatedSignature, expectedSignature});
     }
