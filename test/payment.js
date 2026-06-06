@@ -21,13 +21,12 @@ async function generateSecureRandomString(length) {
  */
 async function start() {
   const MMPay = MMPaySDK({
-    appId: process.env.APP_ID,
-    publishableKey: process.env.PRD_PUB_KEY,
-    secretKey: process.env.PRD_SEC_KEY,
+    appId: process.env.SBX_APP_ID,
+    publishableKey: process.env.SBX_PUB_KEY,
+    secretKey: process.env.SBX_SEC_KEY,
     apiBaseUrl: process.env.BASEURL
   });
-  // const orderId = await generateSecureRandomString(6);
-  const orderId = "changeThisOrderIDHere"
+  const orderId = await generateSecureRandomString(10);
   const startTime = performance.now();
   try {
     const payload = {
@@ -36,7 +35,7 @@ async function start() {
       customMessage: "MyanMyanPay Is The Best",
       items: [{ name: "Items", amount: 1500, quantity: 1 }]
     };
-    const response = await MMPay.pay(payload);
+    const response = await MMPay.sandboxPay(payload);
     const endTime = performance.now();
     const latencyMs = (endTime - startTime).toFixed(3);
 

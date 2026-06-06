@@ -17,7 +17,7 @@ export interface PayGetResponse {
   callbackAt?: Date;
   disbursementId?: string;
   disStatus?: 'NONE' | 'REQUESTED' | 'SUCCESS' | 'FAILED';
-  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
   condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
   createdAt: Date;
   transactionRefId?: string;
@@ -60,7 +60,7 @@ export interface CallbackIncomingData {
   method: string;
   currency: string;
   vendor: string;
-  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
   condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
   transactionRefId: string;
   callbackUrl?: string;
