@@ -169,14 +169,27 @@ Body
 
 ```javascript
 
+interface MMPayIncomingCallbackScheme {
+  orderId: string;
+  amount: number;
+  method: 'QR' | 'PIN' | 'PWA' | 'CARD';
+  currency: 'MMK';
+  vendor: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
+  condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+  transactionRefId: string;
+  callbackUrl?: string;
+  customMessage?: string;
+}
+
 MMPay
-  .onTxCreate((tx) => console.log('Created:', tx.orderId))
-  .onTxSuccess((tx) => console.log('Success:', tx.orderId))
-  .onTxFail((tx) => console.log('Failed:', tx.orderId))
-  .onTxRefund((tx) => console.log('Refunded:', tx.orderId))
-  .onTxCancel((tx) => console.log('Cancelled:', tx.orderId))
-  .onTxExpire((tx) => console.log('Expired:', tx.orderId))
-  .onHeartbeat((tx) => console.log('Heartbeat:', tx.orderId))
+  .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
+  .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
+  .onTxFail((tx: MMPayIncomingCallbackScheme) => console.log('Failed:', tx.orderId))
+  .onTxRefund((tx: MMPayIncomingCallbackScheme) => console.log('Refunded:', tx.orderId))
+  .onTxCancel((tx: MMPayIncomingCallbackScheme) => console.log('Cancelled:', tx.orderId))
+  .onTxExpire((tx: MMPayIncomingCallbackScheme) => console.log('Expired:', tx.orderId))
+  .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log(tx.orderId)) // This means already send event coming in again
   .on('error', (err) => console.error(err));
 
 app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
@@ -244,14 +257,27 @@ const MMPay = new MMPaySDK({
     apiBaseUrl: "https://xxxxxx"
 })
 
+interface MMPayIncomingCallbackScheme {
+  orderId: string;
+  amount: number;
+  method: 'QR' | 'PIN' | 'PWA' | 'CARD';
+  currency: 'MMK';
+  vendor: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
+  condition: 'PRISTINE' | 'TOUCHED';
+  transactionRefId: string;
+  callbackUrl?: string;
+  customMessage?: string;
+}
+
 MMPay
-  .onTxCreate((tx) => console.log('Created:', tx.orderId))
-  .onTxSuccess((tx) => console.log('Success:', tx.orderId))
-  .onTxFail((tx) => console.log('Failed:', tx.orderId))
-  .onTxRefund((tx) => console.log('Refunded:', tx.orderId))
-  .onTxCancel((tx) => console.log('Cancelled:', tx.orderId))
-  .onTxExpire((tx) => console.log('Expired:', tx.orderId))
-  .onHeartbeat((tx) => console.log('Heartbeat:', tx.orderId))
+  .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
+  .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
+  .onTxFail((tx: MMPayIncomingCallbackScheme) => console.log('Failed:', tx.orderId))
+  .onTxRefund((tx: MMPayIncomingCallbackScheme) => console.log('Refunded:', tx.orderId))
+  .onTxCancel((tx: MMPayIncomingCallbackScheme) => console.log('Cancelled:', tx.orderId))
+  .onTxExpire((tx: MMPayIncomingCallbackScheme) => console.log('Expired:', tx.orderId))
+  .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log('Heartbeat:', tx.orderId))
   .on('error', (err) => console.error(err));
 
 app.post("/create-order", async (req, res) => {
