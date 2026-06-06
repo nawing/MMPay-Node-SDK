@@ -169,24 +169,31 @@ Body
 
 ```javascript
 
-app.post("/callback", async (req, res) => {
-  const incomingSignature = req.headers('sppay-x-signature');
-  const incomingNonce = req.headers('sppay-x-nonce');
-  const { payloadString } = req.body;
-  const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
-  if (cbResponse) {
-    const parsedPayload = JSON.parse(payloadString);
-    if (parsedPayload.status === 'SUCCESS') {
-      // SUCCESS LOGIC HERE
-    }
-    if (parsedPayload.status !== 'SUCCESS') {
-      // NOT SUCCESS LOGIC HERE
-    }
-  }
-  if (!cbResponse) {
-    return res.status(500).json({ error: 'Callback Verification Fail' });
-  }
-  res.status(200).json({ message: "Success" });
+MMPay
+  .onTxCreate((tx) => console.log('Created:', tx.orderId))
+  .onTxSuccess((tx) => console.log('Success:', tx.orderId))
+  .onTxFail((tx) => console.log('Failed:', tx.orderId))
+  .onTxRefund((tx) => console.log('Refunded:', tx.orderId))
+  .onTxCancel((tx) => console.log('Cancelled:', tx.orderId))
+  .onTxExpire((tx) => console.log('Expired:', tx.orderId))
+  .onHeartbeat((tx) => console.log('Heartbeat:', tx.orderId))
+  .on('error', (err) => console.error(err));
+
+app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
+  const payload = JSON.stringify(req.body);
+  const nonce = req.headers['x-mmpay-nonce'] as string;
+  const signature = req.headers['x-mmpay-signature'] as string;
+  await MMPay.listen(payload, nonce, signature);
+  res.json({ received: true }); // please respond with 200 status
+});
+
+
+app.post('/webhooks/mmpay-callback-sandbox', async (req: Request, res: Response) => {
+  const payload = JSON.stringify(req.body);
+  const nonce = req.headers['x-mmpay-nonce'] as string;
+  const signature = req.headers['x-mmpay-signature'] as string;
+  await MMPay.listen(payload, nonce, signature);
+  res.json({ received: true }); // please respond with 200 status
 });
 ```
 
@@ -237,6 +244,16 @@ const MMPay = new MMPaySDK({
     apiBaseUrl: "https://xxxxxx"
 })
 
+MMPay
+  .onTxCreate((tx) => console.log('Created:', tx.orderId))
+  .onTxSuccess((tx) => console.log('Success:', tx.orderId))
+  .onTxFail((tx) => console.log('Failed:', tx.orderId))
+  .onTxRefund((tx) => console.log('Refunded:', tx.orderId))
+  .onTxCancel((tx) => console.log('Cancelled:', tx.orderId))
+  .onTxExpire((tx) => console.log('Expired:', tx.orderId))
+  .onHeartbeat((tx) => console.log('Heartbeat:', tx.orderId))
+  .on('error', (err) => console.error(err));
+
 app.post("/create-order", async (req, res) => {
     const { amount, items } = req.body;
     const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
@@ -244,7 +261,7 @@ app.post("/create-order", async (req, res) => {
         orderId: 'ORD-199399933',
         amount: 5000,
         items: [
-        { name: "Pencil", amount: 5000, quantity: 1 }
+          { name: "Pencil", amount: 5000, quantity: 1 }
         ],
         customMessage: '', // max 150 char  string
         callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
@@ -253,28 +270,23 @@ app.post("/create-order", async (req, res) => {
     res.status(200).json(payResponse);
 });
 // Validating Callback
-app.post("/callback", async (req, res) => {
-    const incomingSignature = req.headers('x-mmpay-signature');
-    const incomingNonce = req.headers('x-mmpay-nonce');
-    const payload = request.body;
-    const payloadString = JSON.stringify(payload);
-    const cbResponse = await MMPay.verifyCb(payloadString, incomingNonce, incomingSignature );
-    if (cbResponse) {
-        if (payload.status === "SUCCESS" && payload.condition === "PRISTINE") {
-
-        }
-        if (payload.status === 'FAILED' && payload.condition === "PRISTINE") {
-
-        };
-        if (payload.status === 'REFUNDED' && payload.condition === "PRISTINE") {
-
-        };
-        res.status(200).json({ message: "Success" });
-    }
-    if (!cbResponse) {
-        return res.status(500).json({ error: 'Callback Verification Fail' });
-    }
+app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
+  const payload = JSON.stringify(req.body);
+  const nonce = req.headers['x-mmpay-nonce'] as string;
+  const signature = req.headers['x-mmpay-signature'] as string;
+  await MMPay.listen(payload, nonce, signature);
+  res.json({ received: true }); // please respond with 200 status
 });
+
+
+app.post('/webhooks/mmpay-callback-sandbox', async (req: Request, res: Response) => {
+  const payload = JSON.stringify(req.body);
+  const nonce = req.headers['x-mmpay-nonce'] as string;
+  const signature = req.headers['x-mmpay-signature'] as string;
+  await MMPay.listen(payload, nonce, signature);
+  res.json({ received: true }); // please respond with 200 status
+});
+
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
 ```
