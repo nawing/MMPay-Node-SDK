@@ -7,6 +7,7 @@ import {
   PayGetRequest,
   PayGetResponse,
   PaymentRequest,
+  PaymentResponse,
   SDKOptions,
   XPaymentRequest
 } from './types';
@@ -25,6 +26,7 @@ class MMPaySdkClass extends EventEmitter {
   readonly #publishableKey: string;
   readonly #secretKey: string;
   readonly #apiBaseUrl: string;
+  readonly #isSandbox: boolean;
 
   #btoken!: string;
 
@@ -34,6 +36,7 @@ class MMPaySdkClass extends EventEmitter {
     this.#publishableKey = options.publishableKey;
     this.#secretKey = options.secretKey;
     this.#apiBaseUrl = options.apiBaseUrl;
+    this.#isSandbox = this.#publishableKey.includes('_test_') || this.#secretKey.includes('_test_');
   }
 
   _generateSignature(bodyString: string, nonce: string): string {
@@ -123,7 +126,8 @@ class MMPaySdkClass extends EventEmitter {
   }
 
   async handShake(payload: HandShakeRequest): Promise<HandShakeResponse> {
-    const endpoint = `${this.#apiBaseUrl}/payments/handshake`;
+    const segment = this.#isSandbox ? 'sandbox-handshake' : 'handshake';
+    const endpoint = `${this.#apiBaseUrl}/payments/${segment}`;
     const bodyString = JSON.stringify(payload);
     const nonce = Date.now().toString();
     const signature = this._generateSignature(bodyString, nonce);
@@ -148,7 +152,8 @@ class MMPaySdkClass extends EventEmitter {
   }
 
   async pay(params: PaymentRequest): Promise<PaymentResponse> {
-    const endpoint = `${this.#apiBaseUrl}/payments/create`;
+    const segment = this.#isSandbox ? 'sandbox-create' : 'create';
+    const endpoint = `${this.#apiBaseUrl}/payments/${segment}`;
     const nonce = Date.now().toString();
     let _xpayload: XPaymentRequest = {
       appId: this.#appId,
@@ -183,7 +188,8 @@ class MMPaySdkClass extends EventEmitter {
   }
 
   async get(params: PayGetRequest): Promise<PayGetResponse> {
-    const endpoint = `${this.#apiBaseUrl}/payments/get`;
+    const segment = this.#isSandbox ? 'sandbox-get' : 'get';
+    const endpoint = `${this.#apiBaseUrl}/payments/${segment}`;
     const nonce = Date.now().toString();
     let _xpayload: PayGetRequest = {
       orderId: params.orderId,

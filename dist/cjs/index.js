@@ -10,7 +10,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _MMPaySdkClass_appId, _MMPaySdkClass_publishableKey, _MMPaySdkClass_secretKey, _MMPaySdkClass_apiBaseUrl, _MMPaySdkClass_btoken;
+var _MMPaySdkClass_appId, _MMPaySdkClass_publishableKey, _MMPaySdkClass_secretKey, _MMPaySdkClass_apiBaseUrl, _MMPaySdkClass_isSandbox, _MMPaySdkClass_btoken;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MMPaySDK = MMPaySDK;
 const node_crypto_1 = require("node:crypto");
@@ -30,11 +30,13 @@ class MMPaySdkClass extends node_events_1.EventEmitter {
         _MMPaySdkClass_publishableKey.set(this, void 0);
         _MMPaySdkClass_secretKey.set(this, void 0);
         _MMPaySdkClass_apiBaseUrl.set(this, void 0);
+        _MMPaySdkClass_isSandbox.set(this, void 0);
         _MMPaySdkClass_btoken.set(this, void 0);
         __classPrivateFieldSet(this, _MMPaySdkClass_appId, options.appId, "f");
         __classPrivateFieldSet(this, _MMPaySdkClass_publishableKey, options.publishableKey, "f");
         __classPrivateFieldSet(this, _MMPaySdkClass_secretKey, options.secretKey, "f");
         __classPrivateFieldSet(this, _MMPaySdkClass_apiBaseUrl, options.apiBaseUrl, "f");
+        __classPrivateFieldSet(this, _MMPaySdkClass_isSandbox, __classPrivateFieldGet(this, _MMPaySdkClass_publishableKey, "f").includes('_test_') || __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f").includes('_test_'), "f");
     }
     _generateSignature(bodyString, nonce) {
         const stringToSign = `${nonce}.${bodyString}`;
@@ -112,7 +114,8 @@ class MMPaySdkClass extends node_events_1.EventEmitter {
         return this;
     }
     async handShake(payload) {
-        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/handshake`;
+        const segment = __classPrivateFieldGet(this, _MMPaySdkClass_isSandbox, "f") ? 'sandbox-handshake' : 'handshake';
+        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/${segment}`;
         const bodyString = JSON.stringify(payload);
         const nonce = Date.now().toString();
         const signature = this._generateSignature(bodyString, nonce);
@@ -138,7 +141,8 @@ class MMPaySdkClass extends node_events_1.EventEmitter {
         }
     }
     async pay(params) {
-        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/create`;
+        const segment = __classPrivateFieldGet(this, _MMPaySdkClass_isSandbox, "f") ? 'sandbox-create' : 'create';
+        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/${segment}`;
         const nonce = Date.now().toString();
         let _xpayload = {
             appId: __classPrivateFieldGet(this, _MMPaySdkClass_appId, "f"),
@@ -174,7 +178,8 @@ class MMPaySdkClass extends node_events_1.EventEmitter {
         }
     }
     async get(params) {
-        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/get`;
+        const segment = __classPrivateFieldGet(this, _MMPaySdkClass_isSandbox, "f") ? 'sandbox-get' : 'get';
+        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/${segment}`;
         const nonce = Date.now().toString();
         let _xpayload = {
             orderId: params.orderId,
@@ -218,4 +223,4 @@ class MMPaySdkClass extends node_events_1.EventEmitter {
         return (generatedSignature === expectedSignature);
     }
 }
-_MMPaySdkClass_appId = new WeakMap(), _MMPaySdkClass_publishableKey = new WeakMap(), _MMPaySdkClass_secretKey = new WeakMap(), _MMPaySdkClass_apiBaseUrl = new WeakMap(), _MMPaySdkClass_btoken = new WeakMap();
+_MMPaySdkClass_appId = new WeakMap(), _MMPaySdkClass_publishableKey = new WeakMap(), _MMPaySdkClass_secretKey = new WeakMap(), _MMPaySdkClass_apiBaseUrl = new WeakMap(), _MMPaySdkClass_isSandbox = new WeakMap(), _MMPaySdkClass_btoken = new WeakMap();

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { CallbackIncomingData, HandShakeRequest, HandShakeResponse, PayGetRequest, PayGetResponse, PaymentRequest, SDKOptions } from './types';
+import { CallbackIncomingData, HandShakeRequest, HandShakeResponse, PayGetRequest, PayGetResponse, PaymentRequest, PaymentResponse, SDKOptions } from './types';
 export declare function MMPaySDK(options: SDKOptions): MMPaySdkClass;
 declare class MMPaySdkClass extends EventEmitter {
     #private;
