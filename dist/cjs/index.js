@@ -14,6 +14,7 @@ var _MMPaySdkClass_appId, _MMPaySdkClass_publishableKey, _MMPaySdkClass_secretKe
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MMPaySDK = MMPaySDK;
 const node_crypto_1 = require("node:crypto");
+const node_events_1 = require("node:events");
 function MMPaySDK(options) {
     return new MMPaySdkClass({
         appId: options.appId,
@@ -22,8 +23,9 @@ function MMPaySDK(options) {
         apiBaseUrl: options.apiBaseUrl,
     });
 }
-class MMPaySdkClass {
+class MMPaySdkClass extends node_events_1.EventEmitter {
     constructor(options) {
+        super();
         _MMPaySdkClass_appId.set(this, void 0);
         _MMPaySdkClass_publishableKey.set(this, void 0);
         _MMPaySdkClass_secretKey.set(this, void 0);
@@ -36,130 +38,79 @@ class MMPaySdkClass {
     }
     _generateSignature(bodyString, nonce) {
         const stringToSign = `${nonce}.${bodyString}`;
-        // Replaced CryptoJS with node:crypto
         return (0, node_crypto_1.createHmac)('sha256', __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f"))
             .update(stringToSign)
             .digest('hex');
     }
-    /**
-     * SANDBOX
-     */
-    /**
-     * sandboxHandShake
-     * @param {HandShakeRequest} payload
-     * @returns {Promise<HandShakeResponse>}
-     */
-    async sandboxHandShake(payload) {
-        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/sandbox-handshake`;
-        const bodyString = JSON.stringify(payload);
-        const nonce = Date.now().toString();
-        const signature = this._generateSignature(bodyString, nonce);
+    async listen(payload, nonce, expectedSignature) {
         try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                body: bodyString,
-                headers: {
-                    'Authorization': `Bearer ${__classPrivateFieldGet(this, _MMPaySdkClass_publishableKey, "f")}`,
-                    'X-Mmpay-Nonce': nonce,
-                    'X-Mmpay-Signature': signature,
-                    'Content-Type': 'application/json',
-                }
-            });
-            const data = await response.json();
-            if (!response.ok)
-                throw data;
-            __classPrivateFieldSet(this, _MMPaySdkClass_btoken, data.token, "f");
-            return data;
+            const isValid = await this.verifyCb(payload, nonce, expectedSignature);
+            if (!isValid) {
+                this.emit('error', new Error('Signature verification failed'));
+                return this;
+            }
+            const tx = JSON.parse(payload);
+            switch (tx.status) {
+                case 'PENDING':
+                    this.emit('tx:create', tx);
+                    break;
+                case 'SUCCESS':
+                    if (tx.condition === 'TOUCHED') {
+                        this.emit('tx:heartbeat', tx);
+                    }
+                    else {
+                        this.emit('tx:success', tx);
+                    }
+                    break;
+                case 'FAILED':
+                    this.emit('tx:failed', tx);
+                    break;
+                case 'REFUNDED':
+                    this.emit('tx:refunded', tx);
+                    break;
+                case 'CANCELLED':
+                    this.emit('tx:cancel', tx);
+                    break;
+                case 'EXPIRED':
+                    this.emit('tx:expire', tx);
+                    break;
+                default:
+                    this.emit('tx:unknown', tx);
+            }
         }
-        catch (error) {
-            return error;
+        catch (err) {
+            this.emit('error', err);
         }
+        return this;
     }
-    /**
-     * sandboxPay
-     * @param {PaymentRequest} params
-     * @returns {Promise<PaymentResponse>}
-     */
-    async sandboxPay(params) {
-        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/sandbox-create`;
-        const nonce = Date.now().toString();
-        let _xpayload = {
-            appId: __classPrivateFieldGet(this, _MMPaySdkClass_appId, "f"),
-            nonce: nonce,
-            amount: params.amount,
-            orderId: params.orderId,
-            callbackUrl: params.callbackUrl,
-            customMessage: params.customMessage,
-            items: params.items,
-        };
-        const bodyString = JSON.stringify(_xpayload);
-        const signature = this._generateSignature(bodyString, nonce);
-        await this.sandboxHandShake({ orderId: _xpayload.orderId, nonce: _xpayload.nonce });
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                body: bodyString,
-                headers: {
-                    'Authorization': `Bearer ${__classPrivateFieldGet(this, _MMPaySdkClass_publishableKey, "f")}`,
-                    'X-Mmpay-Btoken': __classPrivateFieldGet(this, _MMPaySdkClass_btoken, "f"),
-                    'X-Mmpay-Nonce': nonce,
-                    'X-Mmpay-Signature': signature,
-                    'Content-Type': 'application/json',
-                }
-            });
-            const data = await response.json();
-            if (!response.ok)
-                throw data;
-            return data;
-        }
-        catch (error) {
-            return error;
-        }
+    onTxCreate(cb) {
+        this.on('tx:create', cb);
+        return this;
     }
-    /**
-     * sandboxGet
-     * @param {PayGetRequest} params
-     * @returns {Promise<PayGetResponse> }
-     */
-    async sandboxGet(params) {
-        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/sandbox-get`;
-        const nonce = Date.now().toString();
-        let _xpayload = {
-            orderId: params.orderId,
-            nonce: nonce
-        };
-        const bodyString = JSON.stringify(_xpayload);
-        const signature = this._generateSignature(bodyString, nonce);
-        await this.sandboxHandShake({ orderId: _xpayload.orderId, nonce: _xpayload.nonce });
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                body: bodyString,
-                headers: {
-                    'Authorization': `Bearer ${__classPrivateFieldGet(this, _MMPaySdkClass_publishableKey, "f")}`,
-                    'X-Mmpay-Btoken': __classPrivateFieldGet(this, _MMPaySdkClass_btoken, "f"),
-                    'X-Mmpay-Nonce': nonce,
-                    'X-Mmpay-Signature': signature,
-                    'Content-Type': 'application/json',
-                }
-            });
-            const data = await response.json();
-            if (!response.ok)
-                throw data;
-            return data;
-        }
-        catch (error) {
-            return error;
-        }
+    onTxSuccess(cb) {
+        this.on('tx:success', cb);
+        return this;
     }
-    /**
-     * PRODUCTION
-     */
-    /**
-     * handShake
-     * @param {HandShakeRequest} payload
-     * @returns {Promise<HandShakeResponse>}
-     */
+    onTxFail(cb) {
+        this.on('tx:failed', cb);
+        return this;
+    }
+    onTxRefund(cb) {
+        this.on('tx:refunded', cb);
+        return this;
+    }
+    onTxCancel(cb) {
+        this.on('tx:cancel', cb);
+        return this;
+    }
+    onTxExpire(cb) {
+        this.on('tx:expire', cb);
+        return this;
+    }
+    onHeartbeat(cb) {
+        this.on('tx:heartbeat', cb);
+        return this;
+    }
     async handShake(payload) {
         const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/handshake`;
         const bodyString = JSON.stringify(payload);
@@ -186,11 +137,6 @@ class MMPaySdkClass {
             return error;
         }
     }
-    /**
-     * pay
-     * @param {PaymentRequest} params
-     * @returns {Promise<PaymentResponse>}
-     */
     async pay(params) {
         const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/create`;
         const nonce = Date.now().toString();
@@ -227,11 +173,6 @@ class MMPaySdkClass {
             return error;
         }
     }
-    /**
-     * get
-     * @param {PayGetRequest} params
-     * @returns {Promise<PayGetResponse> }
-     */
     async get(params) {
         const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/get`;
         const nonce = Date.now().toString();
@@ -263,19 +204,11 @@ class MMPaySdkClass {
             return error;
         }
     }
-    /**
-     * verifyCb
-     * @param {string} payload
-     * @param {string} nonce
-     * @param {string} expectedSignature
-     * @returns {Promise<boolean>}
-     */
     async verifyCb(payload, nonce, expectedSignature) {
         if (!payload || !nonce || !expectedSignature) {
             throw new Error("Callback verification failed: Missing payload, nonce, or signature.");
         }
         const stringToSign = `${nonce}.${payload}`;
-        // Replaced CryptoJS with node:crypto
         const generatedSignature = (0, node_crypto_1.createHmac)('sha256', __classPrivateFieldGet(this, _MMPaySdkClass_secretKey, "f"))
             .update(stringToSign)
             .digest('hex');
