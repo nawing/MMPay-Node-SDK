@@ -24,7 +24,7 @@ export interface PayGetResponse {
 export interface PaymentRequest {
     orderId: string;
     amount: number;
-    currency?: string;
+    currency?: 'MMK';
     callbackUrl?: string;
     customMessage?: string;
     items?: Item[];
@@ -41,7 +41,7 @@ export interface Item {
 export interface PaymentResponse {
     orderId: string;
     amount: number;
-    currency?: string;
+    currency: 'MMK';
     status: 'PENDING' | 'SUCCESS' | 'FAILED';
     qr: string;
     url: string;
@@ -49,11 +49,11 @@ export interface PaymentResponse {
 export interface CallbackIncomingData {
     orderId: string;
     amount: number;
-    method: string;
-    currency: string;
+    method: 'QR' | 'PIN' | 'PWA' | 'CARD';
+    currency: 'MMK';
     vendor: string;
     status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
-    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED';
+    condition: 'PRISTINE' | 'TOUCHED';
     transactionRefId: string;
     callbackUrl?: string;
     customMessage?: string;
