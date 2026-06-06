@@ -80,7 +80,6 @@ export { mmpayPlugin };
 import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { mmpayPlugin } from './plugins/mmpayPlugin';
 
-
 interface MMPayIncomingCallbackScheme {
   orderId: string;
   amount: number;

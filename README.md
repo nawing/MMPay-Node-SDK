@@ -20,6 +20,7 @@ It is CRITICAL that this key is loaded from an environment variable for security
 ```javascript
 // Load the SDK and configuration
 const { MMPaySDK } = require('mmpay-node-sdk');
+
 const MMPay = new MMPaySdk({
   appId: "MMxxxxxxx",
   publishableKey: "pk_live_abcxxxxx",
@@ -35,9 +36,7 @@ const MMPay = new MMPaySdk({
 let options = {
   orderId: 'ORD-199399933',
   amount: 5000,
-  items: [
-    { name: "Pencil", amount: 5000, quantity: 1 }
-  ],
+  items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
   customMessage: '', // max 150 char  string
   callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
 }
@@ -119,9 +118,7 @@ const MMPay = new MMPaySdk({
 let options = {
   orderId: 'ORD-199399933',
   amount: 5000,
-  items: [
-    { name: "Pencil", amount: 5000, quantity: 1 }
-  ],
+  items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
   customMessage: '', // max 150 char  string
   callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
 }
@@ -250,22 +247,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
-const { MMPaySDK } = require('mmpay-node-sdk');
-
-const MMPay = new MMPaySDK({
-    appId: "MMxxxxxxx",
-    publishableKey: "pk_live_abcxxxxx",
-    secretKey: "sk_live_abcxxxxx",
-    apiBaseUrl: "https://xxxxxx"
-});
-
-const MMPaySandbox = new MMPaySDK({
-    appId: "MMxxxxxxx",
-    publishableKey: "pk_test_abcxxxxx",
-    secretKey: "sk_test_abcxxxxx",
-    apiBaseUrl: "https://xxxxxx"
-})
-
 interface MMPayIncomingCallbackScheme {
   orderId: string;
   amount: number;
@@ -278,6 +259,22 @@ interface MMPayIncomingCallbackScheme {
   callbackUrl?: string;
   customMessage?: string;
 }
+
+const { MMPaySDK } = require('mmpay-node-sdk');
+
+const MMPay = new MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_live_abcxxxxx",
+  secretKey: "sk_live_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+});
+
+const MMPaySandbox = new MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+});
 
 MMPay
   .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
@@ -299,21 +296,22 @@ MMPaySandbox
   .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log('Heartbeat:', tx.orderId))
   .on('error', (err) => console.error(err));
 
+
+// Create Order
 app.post("/create-order", async (req, res) => {
-    const { amount, items } = req.body;
-    const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
-    const payload = {
-        orderId: 'ORD-199399933',
-        amount: 5000,
-        items: [
-          { name: "Pencil", amount: 5000, quantity: 1 }
-        ],
-        customMessage: '', // max 150 char  string
-        callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
-    }
-    let payResponse = await MMPay.pay(payload);
-    res.status(200).json(payResponse);
+  const { amount, items } = req.body;
+  const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
+  const payload = {
+    orderId: 'ORD-199399933',
+    amount: 5000,
+    items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
+    customMessage: '', // max 150 char  string
+    callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
+  }
+  let payResponse = await MMPay.pay(payload);
+  res.status(200).json(payResponse);
 });
+
 // Listening Callback
 app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
   const payload = JSON.stringify(req.body);
@@ -323,21 +321,21 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
   res.json({ received: true }); // please respond with 200 status
 });
 
+// Create Order
 app.post("/create-order-sandbox", async (req, res) => {
-    const { amount, items } = req.body;
-    const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
-    const payload = {
-        orderId: 'ORD-199399933',
-        amount: 5000,
-        items: [
-          { name: "Pencil", amount: 5000, quantity: 1 }
-        ],
-        customMessage: '', // max 150 char  string
-        callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
-    }
-    let payResponse = await MMPaySandbox.pay(payload);
-    res.status(200).json(payResponse);
+  const { amount, items } = req.body;
+  const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
+  const payload = {
+    orderId: 'ORD-199399933',
+    amount: 5000,
+    items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
+    customMessage: '', // max 150 char  string
+    callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
+  }
+  let payResponse = await MMPaySandbox.pay(payload);
+  res.status(200).json(payResponse);
 });
+
 // Listening Callback
 app.post('/webhooks/mmpay-callback-sandbox', async (req: Request, res: Response) => {
   const payload = JSON.stringify(req.body);
