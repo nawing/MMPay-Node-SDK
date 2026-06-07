@@ -188,6 +188,14 @@ interface MMPayIncomingCallbackScheme {
   customMessage?: string;
 }
 
+
+const MMPay = new MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_live_abcxxxxx",
+  secretKey: "sk_live_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+});
+
 MMPay
   .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
   .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
@@ -269,13 +277,6 @@ const MMPay = new MMPaySDK({
   apiBaseUrl: "https://xxxxxx"
 });
 
-const MMPaySandbox = new MMPaySDK({
-  appId: "MMxxxxxxx",
-  publishableKey: "pk_test_abcxxxxx",
-  secretKey: "sk_test_abcxxxxx",
-  apiBaseUrl: "https://xxxxxx"
-});
-
 MMPay
   .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
   .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
@@ -286,19 +287,8 @@ MMPay
   .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log('Heartbeat:', tx.orderId))
   .on('error', (err) => console.error(err));
 
-MMPaySandbox
-  .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
-  .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
-  .onTxFail((tx: MMPayIncomingCallbackScheme) => console.log('Failed:', tx.orderId))
-  .onTxRefund((tx: MMPayIncomingCallbackScheme) => console.log('Refunded:', tx.orderId))
-  .onTxCancel((tx: MMPayIncomingCallbackScheme) => console.log('Cancelled:', tx.orderId))
-  .onTxExpire((tx: MMPayIncomingCallbackScheme) => console.log('Expired:', tx.orderId))
-  .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log('Heartbeat:', tx.orderId))
-  .on('error', (err) => console.error(err));
-
-
 // Create Order
-app.post("/create-order", async (req, res) => {
+app.post("/create-order", async (req: Request, res: Response) => {
   const { amount, items } = req.body;
   const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
   const payload = {
@@ -321,8 +311,25 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
   res.json({ received: true }); // please respond with 200 status
 });
 
+const MMPaySandbox = new MMPaySDK({
+  appId: "MMxxxxxxx",
+  publishableKey: "pk_test_abcxxxxx",
+  secretKey: "sk_test_abcxxxxx",
+  apiBaseUrl: "https://xxxxxx"
+});
+
+MMPaySandbox
+  .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
+  .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
+  .onTxFail((tx: MMPayIncomingCallbackScheme) => console.log('Failed:', tx.orderId))
+  .onTxRefund((tx: MMPayIncomingCallbackScheme) => console.log('Refunded:', tx.orderId))
+  .onTxCancel((tx: MMPayIncomingCallbackScheme) => console.log('Cancelled:', tx.orderId))
+  .onTxExpire((tx: MMPayIncomingCallbackScheme) => console.log('Expired:', tx.orderId))
+  .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log('Heartbeat:', tx.orderId))
+  .on('error', (err) => console.error(err));
+
 // Create Order
-app.post("/create-order-sandbox", async (req, res) => {
+app.post("/create-order-sandbox", async (req: Request, res: Response) => {
   const { amount, items } = req.body;
   const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
   const payload = {
