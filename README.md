@@ -119,36 +119,14 @@ const MMPay = new MMPaySdk({
   secretKey: "sk_test_abcxxxxx", // <<< When your input key is test key, our SDK knows automatically to switch to testing environment
   apiBaseUrl: "https://xxxxxx"
 })
-
-let options = {
-  orderId: 'ORD-199399933',
-  amount: 5000,
-  items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
-  customMessage: '', // max 150 char  string
-  callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
-}
-// sync
-MMPay.pay(options)
-    .then((response) => {
-        console.log(response)
-    }).catch((error) => {
-        console.log(error)
-    });
-// async
-try {
-    await MMPay.pay(options)
-} catch (error) {
-    console.log(error)
-}
 ```
 
 
 ---
 
-
-## 🔐 4. Verifying Incoming Callbacks (Webhooks)
-To secure your webhook endpoint that receives callbacks from the MMPay server, use the built-in Express middleware provided by the SDK. This middleware performs the mandatory Signature and Nonce verification.
-
+## 🔐 4. Handling Webhooks
+To secure your webhook endpoint that receives callbacks from the MMPay server, use this event listener to handle the events.
+The **listen** performs the mandatory Signature and Nonce verification and emits events
 
 **Handling callbacks**
 
@@ -192,7 +170,6 @@ interface MMPayIncomingCallbackScheme {
   callbackUrl?: string;
   customMessage?: string;
 }
-
 
 const MMPay = new MMPaySDK({
   appId: "MMxxxxxxx",
@@ -275,6 +252,9 @@ interface MMPayIncomingCallbackScheme {
 
 const { MMPaySDK } = require('mmpay-node-sdk');
 
+
+// Production Environment
+
 const MMPay = new MMPaySDK({
   appId: "MMxxxxxxx",
   publishableKey: "pk_live_abcxxxxx",
@@ -315,6 +295,12 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
   await MMPay.listen(payload, nonce, signature);
   res.json({ received: true }); // please respond with 200 status
 });
+
+
+
+
+
+// Sandbox Environment
 
 const MMPaySandbox = new MMPaySDK({
   appId: "MMxxxxxxx",
