@@ -40,7 +40,18 @@ let options = {
   customMessage: '', // max 150 char  string
   callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
 }
-// sync
+
+try {
+    const { qr, transactionRefId, orderId } = await MMPay.pay(options);
+    console.log(qr) // this is your QR String [EMVCo String]
+    console.log(transactionRefId) // this is your QR Reference No
+    console.log(orderId) // this is your order ID
+} catch (error) {
+    console.log(error)
+}
+
+// OR
+
 MMPay.pay(options)
     .then((response) => {
         console.log(response)
@@ -48,12 +59,6 @@ MMPay.pay(options)
         console.log(error)
     })
 
-// async
-try {
-    await MMPay.pay(options)
-} catch (error) {
-    console.log(error)
-}
 ```
 
 ### Request Body (`payload` structure)

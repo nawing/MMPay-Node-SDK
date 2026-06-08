@@ -60,7 +60,7 @@ const app = new Elysia()
   })
   .post('/create-order-sandbox', async ({ body, mmpay }) => {
     const { amount, orderId, items, customMessage } = body as any;
-    return await mmpay.sandbox.sandboxPay({ amount, orderId, items, customMessage });
+    return await mmpay.sandbox.pay({ amount, orderId, items, customMessage });
   })
   .post('/webhooks/mmpay-callback', async ({ body, headers, mmpay }) => {
     const incomingSignature = headers['x-mmpay-signature'] as string;

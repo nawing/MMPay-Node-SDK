@@ -78,7 +78,7 @@ fastify.post('/webhooks/mmpay-callback', async (request: FastifyRequest, reply: 
 
 fastify.post('/create-order-sandbox', async (request: FastifyRequest, reply: FastifyReply) => {
     const { amount, orderId, items, customMessage } = request.body as any;
-    const payResponse = await fastify.mmpay.sandbox.sandboxPay({
+    const payResponse = await fastify.mmpay.sandbox.pay({
         amount,
         orderId,
         items,
