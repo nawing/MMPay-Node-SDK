@@ -162,7 +162,7 @@ The request body should be a JSON object containing the transaction details.
 {
   "amount": 1000,
   "orderId": "ORD-111111111",
-  "status": "SUCCESS",
+  "status": "CANCELLED",
   "vendorQrRefId": "289348734939",
 }
 ```
@@ -279,12 +279,13 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 
 ---
 
-## 💡 Implementation IDEA
 
-
+### Implementing with Browser Plugin `showPaymentModal()`
 
 #### Verifying Source of Truth
-Cancel your order instantly if the amount is not the same as your source of truth
+
+This is critical for those, using browser plugins with no source of truth. Cancel your order instantly if the amount is not the same as your source of truth.
+
 ```javascript
 MMPay
   .onTxCreate((tx: MMPayIncomingCallbackScheme) => {
@@ -293,8 +294,10 @@ MMPay
       await MMPay.cancel(tx.orderId)
     }
   })
-
 ```
+
+
+## 💡 Putting All Together
 
 #### Express JS Framwork Usage Full Example
 
