@@ -84,11 +84,10 @@ The request body should be a JSON object containing the transaction details.
   "orderId": "_trx_0012345",
   "status": "PENDING",
   "vendorQrRefId": "39233043003345",
-  "transactionRefId": "39233043003345", // This is deprecated
+  "transactionRefId": "39233043003345", // This is deprecated - transactionRefId will show only after payment is confirmed
   "amount": 2800,
   "currency": "MMK",
-  "qr": "EMVco MMQR String => You_have_to_embed_as_qr_image_yourself",
-  "status": "PENDING"
+  "qr": "EMVco MMQR String => You_have_to_embed_as_qr_image_yourself"
 }
 ```
 ---
