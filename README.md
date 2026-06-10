@@ -31,39 +31,29 @@ const MMPay = new MMPaySdk({
 
 ## 💳 3. Make Payment
 
+#### **Method Signature**
+```typescript
+pay(payload: PaymentRequest): Promise<PaymentResponse>
+```
+
 ```javascript
 
-let options = {
-  orderId: 'ORD-199399933',
-  amount: 5000,
-  items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
-  customMessage: '', // max 150 char  string
-  callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
-}
+const amount = 1000;
+const orderId = 'ORD-199399933';
+const customMessage = 'myanmyanpay_is_the_best';
+const callbackUrl = 'https://mycallback/webhooks/callback'
 
 try {
-    const { qr, transactionRefId, orderId } = await MMPay.pay(options);
+    const { qr } = await MMPay.pay({ amount, orderId, customMessage, callbackUrl });
     console.log(qr) // this is your QR String [EMVCo String]
-    console.log(transactionRefId) // this is your QR Reference No
-    console.log(orderId) // this is your order ID
 } catch (error) {
     console.log(error)
 }
-
-// OR
-
-MMPay.pay(options)
-    .then((response) => {
-        console.log(response)
-    }).catch((error) => {
-        console.log(error)
-    })
-
 ```
 
 ### Request Body (`payload` structure)
 
-The request body should be a JSON object containing the transaction details. Based on your `IPTrx` interface, the required fields are:
+The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
@@ -82,16 +72,6 @@ The request body should be a JSON object containing the transaction details. Bas
 | **`amount`** | `number` | The unit price of the item. |
 | **`quantity`** | `number` | The number of units purchased. |
 
-### Response Codes
-
-| Code | Status | Description |
-| :--- | :--- | :--- |
-| **`201`** | Created | Transaction initiated successfully. Response contains QR code URL/details. |
-| **`401`** | Unauthorized | Invalid or missing Publishable Key. |
-| **`400`** | Bad Request | Missing required body fields (validated by schema, if implemented). |
-| **`503`** | Service Unavailable | Upstream payment API failed or is unreachable. |
-| **`500`** | Internal Server Error | General server error during payment initiation. |
-
 
 ### Successful Response (`201`) Example
 
@@ -104,27 +84,88 @@ The request body should be a JSON object containing the transaction details. Bas
   "status": "PENDING"
 }
 ```
+---
 
+## 🚀 4. Get a payment information
 
-
-## 🚀 4. Requesting On Sandbox Environment
-```javascript
-
-// Load the SDK and configuration
-const { MMPaySDK } = require('mmpay-node-sdk');
-
-const MMPay = new MMPaySdk({
-  appId: "MMxxxxxxx",
-  publishableKey: "pk_test_abcxxxxx", // <<< When your input key is test key, our SDK knows automatically to switch to testing environment
-  secretKey: "sk_test_abcxxxxx", // <<< When your input key is test key, our SDK knows automatically to switch to testing environment
-  apiBaseUrl: "https://xxxxxx"
-})
+#### **Method Signature**
+```typescript
+get({orderId: string}): Promise<PayGetResponse>
 ```
 
+```javascript
+// Load the SDK and configuration
+const response = await MMPay.get({orderId: 'ORD-111111111'});
+console.log(response)
+```
+
+### Request Body (`payload` structure)
+
+The request body should be a JSON object containing the transaction details.
+
+| Field | Type | Required | Description | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
+
+### Response Body
+
+```json
+{
+  "orderId": "ORD-111111111",
+  "appId": "MMP3883483",
+  "amount": 1000,
+  "vendor": "KBZPay",
+  "method": "QR",
+  "customMessage": "",
+  "callbackUrl": "",
+  "callbackUrlAt": "JSDateObject",
+  "callbackUrlStatus": "SUCCESS",
+  "status": "SUCCESS", //  'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
+  "disbursementId": "289348734939",
+  "disStatus": "SUCCESS",
+  "condition": "TOUCHED", // TOUCHED | 'PRISTINE'
+  "createdAt": "JSDateObject",
+  "transactionRefId": "939583046594",
+  "vendorQrRefId": "48309449034",
+  "qr": "EMVCo QR String::MMQR Standard",
+}
+```
+---
+
+## 🚀 5. Cancel a payment
+
+```typescript
+get({orderId: string}): Promise<PayCancelResponse>
+```
+
+```javascript
+// Load the SDK and configuration
+const response = await MMPay.cancel({orderId: 'ORD-111111111')};
+console.log(response)
+```
+
+### Request Body (`payload` structure)
+
+The request body should be a JSON object containing the transaction details.
+
+| Field | Type | Required | Description | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
+
+### Response Body
+
+```json
+{
+  "amount": 1000,
+  "orderId": "ORD-111111111",
+  "status": "SUCCESS",
+  "vendorQrRefId": "289348734939",
+}
+```
 
 ---
 
-## 🔐 4. Handling Webhooks
+## 🔐 6. Handling Webhooks
 To secure your webhook endpoint that receives callbacks from the MMPay server, use this event listener to handle the events.
 The **listen** performs the mandatory Signature and Nonce verification and emits events
 
@@ -222,11 +263,34 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 | **`429`**   | Ratelimit hit only 1000 request / minute allowed |
 
 
+### Response Codes
+
+| Code | Status | Description |
+| :--- | :--- | :--- |
+| **`201`** | Created | Transaction initiated successfully. Response contains QR code URL/details. |
+| **`401`** | Unauthorized | Invalid or missing Publishable Key. |
+| **`400`** | Bad Request | Missing required body fields (validated by schema, if implemented). |
+| **`503`** | Service Unavailable | Upstream payment API failed or is unreachable. |
+| **`500`** | Internal Server Error | General server error during payment initiation. |
+
 ---
 
 ## 💡 Implementation IDEA
 
-We Love Typescript, so here are our favourite framework plugins implementations
+
+
+#### Verifying Source of Truth
+Cancel your order instantly if the amount is not the same as your source of truth
+```javascript
+MMPay
+  .onTxCreate((tx: MMPayIncomingCallbackScheme) => {
+    const { amount } = await DB.getOrderId(tx.orderId)
+    if (tx.amount !== amount ) {
+      await MMPay.cancel(tx.orderId)
+    }
+  })
+
+```
 
 #### Express JS Framwork Usage Full Example
 
@@ -251,54 +315,6 @@ interface MMPayIncomingCallbackScheme {
 }
 
 const { MMPaySDK } = require('mmpay-node-sdk');
-
-
-// Production Environment
-
-const MMPay = new MMPaySDK({
-  appId: "MMxxxxxxx",
-  publishableKey: "pk_live_abcxxxxx",
-  secretKey: "sk_live_abcxxxxx",
-  apiBaseUrl: "https://xxxxxx"
-});
-
-MMPay
-  .onTxCreate((tx: MMPayIncomingCallbackScheme) => console.log('Created:', tx.orderId))
-  .onTxSuccess((tx: MMPayIncomingCallbackScheme) => console.log('Success:', tx.orderId))
-  .onTxFail((tx: MMPayIncomingCallbackScheme) => console.log('Failed:', tx.orderId))
-  .onTxRefund((tx: MMPayIncomingCallbackScheme) => console.log('Refunded:', tx.orderId))
-  .onTxCancel((tx: MMPayIncomingCallbackScheme) => console.log('Cancelled:', tx.orderId))
-  .onTxExpire((tx: MMPayIncomingCallbackScheme) => console.log('Expired:', tx.orderId))
-  .onHeartbeat((tx: MMPayIncomingCallbackScheme) => console.log('Heartbeat:', tx.orderId))
-  .on('error', (err) => console.error(err));
-
-// Create Order
-app.post("/create-order", async (req: Request, res: Response) => {
-  const { amount, items } = req.body;
-  const orderId = ''; // GET YOUR ORDER ID FROM YOUR BIZ LOGIC
-  const payload = {
-    orderId: 'ORD-199399933',
-    amount: 5000,
-    items: [{ name: "Pencil", amount: 5000, quantity: 1 }],
-    customMessage: '', // max 150 char  string
-    callbackUrl: 'https://abcdef/callback' // [optional] overrides default callbackURL
-  }
-  let payResponse = await MMPay.pay(payload);
-  res.status(200).json(payResponse);
-});
-
-// Listening Callback
-app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
-  const payload = JSON.stringify(req.body);
-  const nonce = req.headers['x-mmpay-nonce'] as string;
-  const signature = req.headers['x-mmpay-signature'] as string;
-  await MMPay.listen(payload, nonce, signature);
-  res.json({ received: true }); // please respond with 200 status
-});
-
-
-
-
 
 // Sandbox Environment
 

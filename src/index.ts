@@ -4,6 +4,8 @@ import {
   CallbackIncomingData,
   HandShakeRequest,
   HandShakeResponse,
+  PayCancelRequest,
+  PayCancelResponse,
   PayGetRequest,
   PayGetResponse,
   PaymentRequest,
@@ -213,6 +215,37 @@ class MMPaySdkClass extends EventEmitter {
       const data = await response.json();
       if (!response.ok) throw data;
       return data as PayGetResponse;
+    } catch (error) {
+      return error as any;
+    }
+  }
+
+  async cancel(params: PayCancelRequest): Promise<PayCancelResponse> {
+    const segment = this.#isSandbox ? 'sandbox-cancel' : 'cancel';
+    const endpoint = `${this.#apiBaseUrl}/payments/${segment}`;
+    const nonce = Date.now().toString();
+    let _xpayload: PayCancelRequest = {
+      orderId: params.orderId,
+      nonce: nonce
+    };
+    const bodyString = JSON.stringify(_xpayload);
+    const signature = this._generateSignature(bodyString, nonce);
+    await this.handShake({orderId: _xpayload.orderId, nonce: _xpayload.nonce});
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: bodyString,
+        headers: {
+          'Authorization': `Bearer ${this.#publishableKey}`,
+          'X-Mmpay-Btoken': this.#btoken,
+          'X-Mmpay-Nonce': nonce,
+          'X-Mmpay-Signature': signature,
+          'Content-Type': 'application/json',
+        }
+      });
+      const data = await response.json();
+      if (!response.ok) throw data;
+      return data as PayCancelResponse;
     } catch (error) {
       return error as any;
     }
