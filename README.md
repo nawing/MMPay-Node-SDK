@@ -17,6 +17,9 @@ npm install mmpay-node-sdk --save
 ## ⚙️ 2. Configuration
 Before use, you must configure the shared Secret Key. This key is used for HMAC-SHA256 signature calculation and verification and must match the key configured on the MMPay platform.
 It is CRITICAL that this key is loaded from an environment variable for security.
+
+
+#### **Implementation**
 ```javascript
 // Load the SDK and configuration
 const { MMPaySDK } = require('mmpay-node-sdk');
@@ -36,8 +39,9 @@ const MMPay = new MMPaySdk({
 pay(payload: PaymentRequest): Promise<PaymentResponse>
 ```
 
-```javascript
 
+#### **Implementation**
+```javascript
 const amount = 1000;
 const orderId = 'ORD-199399933';
 const customMessage = 'myanmyanpay_is_the_best';
@@ -86,15 +90,15 @@ The request body should be a JSON object containing the transaction details.
 ```
 ---
 
-## 🚀 4. Get a payment information
+## 🚀 4. Get Payment Information
 
 #### **Method Signature**
 ```typescript
 get({orderId: string}): Promise<PayGetResponse>
 ```
 
+#### **Implementation**
 ```javascript
-// Load the SDK and configuration
 const response = await MMPay.get({orderId: 'ORD-111111111'});
 console.log(response)
 ```
@@ -132,14 +136,14 @@ The request body should be a JSON object containing the transaction details.
 ```
 ---
 
-## 🚀 5. Cancel a payment
+## 🚀 5. Cancel Payment
 
 ```typescript
-get({orderId: string}): Promise<PayCancelResponse>
+cancel({orderId: string}): Promise<PayCancelResponse>
 ```
 
+#### **Implementation**
 ```javascript
-// Load the SDK and configuration
 const response = await MMPay.cancel({orderId: 'ORD-111111111')};
 console.log(response)
 ```
