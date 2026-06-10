@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { CallbackIncomingData, HandShakeRequest, HandShakeResponse, PayGetRequest, PayGetResponse, PaymentRequest, PaymentResponse, SDKOptions } from './types';
+import { CallbackIncomingData, HandShakeRequest, HandShakeResponse, PayCancelRequest, PayCancelResponse, PayGetRequest, PayGetResponse, PaymentRequest, PaymentResponse, SDKOptions } from './types';
 export declare function MMPaySDK(options: SDKOptions): MMPaySdkClass;
 declare class MMPaySdkClass extends EventEmitter {
     #private;
@@ -16,6 +16,7 @@ declare class MMPaySdkClass extends EventEmitter {
     handShake(payload: HandShakeRequest): Promise<HandShakeResponse>;
     pay(params: PaymentRequest): Promise<PaymentResponse>;
     get(params: PayGetRequest): Promise<PayGetResponse>;
+    cancel(params: PayCancelRequest): Promise<PayCancelResponse>;
     verifyCb(payload: string, nonce: string, expectedSignature: string): Promise<boolean>;
 }
 export {};

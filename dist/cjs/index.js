@@ -209,6 +209,38 @@ class MMPaySdkClass extends node_events_1.EventEmitter {
             return error;
         }
     }
+    async cancel(params) {
+        const segment = __classPrivateFieldGet(this, _MMPaySdkClass_isSandbox, "f") ? 'sandbox-cancel' : 'cancel';
+        const endpoint = `${__classPrivateFieldGet(this, _MMPaySdkClass_apiBaseUrl, "f")}/payments/${segment}`;
+        const nonce = Date.now().toString();
+        let _xpayload = {
+            orderId: params.orderId,
+            nonce: nonce
+        };
+        const bodyString = JSON.stringify(_xpayload);
+        const signature = this._generateSignature(bodyString, nonce);
+        await this.handShake({ orderId: _xpayload.orderId, nonce: _xpayload.nonce });
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                body: bodyString,
+                headers: {
+                    'Authorization': `Bearer ${__classPrivateFieldGet(this, _MMPaySdkClass_publishableKey, "f")}`,
+                    'X-Mmpay-Btoken': __classPrivateFieldGet(this, _MMPaySdkClass_btoken, "f"),
+                    'X-Mmpay-Nonce': nonce,
+                    'X-Mmpay-Signature': signature,
+                    'Content-Type': 'application/json',
+                }
+            });
+            const data = await response.json();
+            if (!response.ok)
+                throw data;
+            return data;
+        }
+        catch (error) {
+            return error;
+        }
+    }
     async verifyCb(payload, nonce, expectedSignature) {
         if (!payload || !nonce || !expectedSignature) {
             throw new Error("Callback verification failed: Missing payload, nonce, or signature.");

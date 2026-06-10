@@ -61,6 +61,8 @@ export interface PaymentResponse {
   amount: number;
   currency: 'MMK';
   status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  vendorQrRefId: string;
+  transactionRefId: string;
   qr: string;
   url: string;
 }

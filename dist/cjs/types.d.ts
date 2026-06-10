@@ -1,3 +1,13 @@
+export interface PayCancelRequest {
+    orderId: string;
+    nonce: string;
+}
+export interface PayCancelResponse {
+    amount: number;
+    orderId: string;
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
+    vendorQrRefId?: string;
+}
 export interface PayGetRequest {
     orderId: string;
     nonce: string;
@@ -18,6 +28,7 @@ export interface PayGetResponse {
     condition: 'PRISTINE' | 'TOUCHED';
     createdAt: Date;
     transactionRefId?: string;
+    vendorQrRefId?: string;
     qr?: string;
     url?: string;
 }
@@ -43,6 +54,8 @@ export interface PaymentResponse {
     amount: number;
     currency: 'MMK';
     status: 'PENDING' | 'SUCCESS' | 'FAILED';
+    vendorQrRefId: string;
+    transactionRefId: string;
     qr: string;
     url: string;
 }
