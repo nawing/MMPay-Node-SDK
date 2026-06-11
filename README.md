@@ -14,12 +14,15 @@ Install the package via npm:
 npm install mmpay-node-sdk --save
 ```
 
+---
+
+
 ## ⚙️ 2. Configuration
 Before use, you must configure the shared Secret Key. This key is used for HMAC-SHA256 signature calculation and verification and must match the key configured on the MMPay platform.
 It is CRITICAL that this key is loaded from an environment variable for security.
 
 
-#### **Implementation**
+**Implementation**
 ```javascript
 // Load the SDK and configuration
 const { MMPaySDK } = require('mmpay-node-sdk');
@@ -32,15 +35,17 @@ const MMPay = new MMPaySdk({
 })
 ```
 
+---
+
+
 ## 💳 3. Make Payment
 
-#### **Method Signature**
+**Method Signature**
 ```typescript
 pay(payload: PaymentRequest): Promise<PaymentResponse>
 ```
 
-
-#### **Implementation**
+**Implementation**
 ```javascript
 const amount = 1000;
 const orderId = 'ORD-199399933';
@@ -55,8 +60,8 @@ try {
 }
 ```
 
-### Request Body (`payload` structure)
 
+**Request Body** (`payload` structure)
 The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
@@ -68,7 +73,8 @@ The request body should be a JSON object containing the transaction details.
 | **`customMessage`**   | `string` | No         | Your Customization String |
 | **`items`**           | `Array<Object>` | No  | List of items included in the purchase. | `[{name: "Hat", amount: 1000, quantity: 1}]` |
 
-#### `items` Object Structure
+**Item Object**
+
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
@@ -76,8 +82,7 @@ The request body should be a JSON object containing the transaction details.
 | **`amount`** | `number` | The unit price of the item. |
 | **`quantity`** | `number` | The number of units purchased. |
 
-### Successful Response (`201`)
-
+**Response Body** Code (`201`)
 The response body should be a JSON object containing the following information.
 
 ```json
@@ -96,27 +101,25 @@ The response body should be a JSON object containing the following information.
 
 ## 🚀 4. Get Payment Information
 
-#### **Method Signature**
+**Method Signature**
 ```typescript
 get({orderId: string}): Promise<PayGetResponse>
 ```
 
-#### **Implementation**
+**Implementation**
 ```javascript
 const response = await MMPay.get({orderId: 'ORD-111111111'});
 console.log(response)
 ```
 
-### Request Body (`payload` structure)
-
+**Request Body** (`payload` structure)
 The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
 | **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
 
-### Response Body
-
+**Response Body** Code (`200`)
 The response body should be a JSON object containing the following information.
 
 ```json
@@ -149,22 +152,20 @@ The response body should be a JSON object containing the following information.
 cancel({orderId: string}): Promise<PayCancelResponse>
 ```
 
-#### **Implementation**
+**Implementation**
 ```javascript
 const response = await MMPay.cancel({orderId: 'ORD-111111111')};
 console.log(response)
 ```
 
-### Request Body (`payload` structure)
-
+**Request Body** (`payload` structure)
 The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
 | **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
 
-### Response Body
-
+**Response Body** Code (`200`)
 The response body should be a JSON object containing the following information.
 
 ```json
@@ -182,11 +183,7 @@ The response body should be a JSON object containing the following information.
 To secure your webhook endpoint that receives callbacks from the MMPay server, use this event listener to handle the events.
 The **listen** performs the mandatory Signature and Nonce verification and emits events
 
-**Handling callbacks**
-
-Incoming HTTP POST Parameters
-
-Header
+**Incoming Headers**
 
 | Field Name | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
@@ -194,7 +191,7 @@ Header
 | **X-Mmpay-Signature** | `string` | Yes | '34834890vfgh9hnf94irfg_48932i4rt90349849' |
 | **X-Mmpay-Nonce** | `string` | Yes | '94843943949349' |
 
-Body
+**Incoming Body**
 
 | Field Name    | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
@@ -210,6 +207,8 @@ Body
 | **callbackUrl**       | `string` | No | Optional URL to receive webhooks or updates. |
 | **customMessage**     | `string` | No | User provided custom message |
 
+
+**Implementation With Express JS**
 
 ```javascript
 
@@ -257,7 +256,7 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 
 ## 7. Error Codes
 
-##### Api Key Layer Authentication [SERVER SDK]
+ Api Key Layer Authentication [SERVER SDK]
 | Code | Description |
 | :--- | :--- |
 | **`KA0001`** | Bearer Token Not Included In Your Request |
@@ -268,7 +267,7 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 | **`429`** | Ratelimit hit only 1000 request / minute allowed |
 
 
-##### JWT Layer Authentication [SERVER SDK]
+ JWT Layer Authentication [SERVER SDK]
 | Code | Description |
 | :--- | :--- |
 | **`BA001`** | `Btoken` is nonce one time token is not included |
@@ -292,7 +291,7 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 
 ### Implementing with Browser Plugin `showPaymentModal()`
 
-#### Verifying Source of Truth
+Verifying Source of Truth
 
 This is critical for those, using browser plugins with no source of truth. Cancel your order instantly if the amount is not the same as your source of truth.
 
@@ -309,7 +308,7 @@ MMPay
 
 ## 💡 Putting All Together
 
-#### Express JS Framwork Usage Full Example
+Express JS Framwork Usage Full Example
 
 ```javascript
 const express = require("express");
