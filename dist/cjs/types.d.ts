@@ -25,7 +25,7 @@ export interface PayGetResponse {
     disbursementId?: string;
     disStatus?: 'NONE' | 'REQUESTED' | 'SUCCESS' | 'FAILED';
     status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
-    condition: 'PRISTINE' | 'TOUCHED';
+    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED' | 'DIRTY';
     createdAt: Date;
     transactionRefId?: string;
     vendorQrRefId?: string;
@@ -66,7 +66,7 @@ export interface CallbackIncomingData {
     currency: 'MMK';
     vendor: string;
     status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED' | 'EXPIRED';
-    condition: 'PRISTINE' | 'TOUCHED';
+    condition: 'PRISTINE' | 'TOUCHED' | 'EXPIRED' | 'DIRTY';
     transactionRefId: string;
     callbackUrl?: string;
     customMessage?: string;
