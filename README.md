@@ -91,6 +91,7 @@ The response body should be a JSON object containing the following information.
   "qr": "EMVco MMQR String => You_have_to_embed_as_qr_image_yourself"
 }
 ```
+
 ---
 
 ## 🚀 4. Get Payment Information
@@ -139,6 +140,7 @@ The response body should be a JSON object containing the following information.
   "qr": "EMVCo QR String::MMQR Standard",
 }
 ```
+
 ---
 
 ## 🚀 5. Cancel Payment
