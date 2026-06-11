@@ -76,8 +76,9 @@ The request body should be a JSON object containing the transaction details.
 | **`amount`** | `number` | The unit price of the item. |
 | **`quantity`** | `number` | The number of units purchased. |
 
+### Successful Response (`201`)
 
-### Successful Response (`201`) Example
+The response body should be a JSON object containing the following information.
 
 ```json
 {
@@ -114,6 +115,8 @@ The request body should be a JSON object containing the transaction details.
 | **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
 
 ### Response Body
+
+The response body should be a JSON object containing the following information.
 
 ```json
 {
@@ -159,6 +162,8 @@ The request body should be a JSON object containing the transaction details.
 | **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
 
 ### Response Body
+
+The response body should be a JSON object containing the following information.
 
 ```json
 {
@@ -248,7 +253,7 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 
 ---
 
-## Error Codes
+## 7. Error Codes
 
 ##### Api Key Layer Authentication [SERVER SDK]
 | Code | Description |
@@ -374,6 +379,6 @@ app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 ```
 
 
+## License
 
-
-
+MIT
