@@ -1,12 +1,6 @@
-## MyanMyanPay Node SDK
+# MyanMyanPay Node SDK
 
-## 📋 Implementation Documentation
 This documentation details the steps for integrating the mmpay-node-sdk into your application to securely send callbacks to the MyanMyanPay SDK server and to verify incoming callbacks from MyanMyanPay.
-
-```typescript
-// TypeScript OR Esm Module
-import { MMPaySDK } from 'mmpay-node-sdk';
-```
 
 ## ⬇️ 1. Installation
 Install the package via npm:
@@ -21,6 +15,12 @@ npm install mmpay-node-sdk --save
 Before use, you must configure the shared Secret Key. This key is used for HMAC-SHA256 signature calculation and verification and must match the key configured on the MMPay platform.
 It is CRITICAL that this key is loaded from an environment variable for security.
 
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| appId | str | Yes | Your unique Application ID. |
+| publishableKey | str | Yes | Public key for authentication. |
+| secretKey | str | Yes | Private key used for signing requests (HMAC). |
+| apiBaseUrl | str | Yes | The base URL for the MMPay API. |
 
 **Implementation**
 ```javascript
@@ -256,27 +256,26 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 
 ## 7. Error Codes
 
- Api Key Layer Authentication [SERVER SDK]
+**HMac Layer (SERVER Side)**
+
 | Code | Description |
 | :--- | :--- |
-| **`KA0001`** | Bearer Token Not Included In Your Request |
-| **`KA0002`** | API Key Not 'LIVE' |
-| **`KA0003`** | Signature mismatch |
-| **`KA0004`** | Internal Server Error ( Talk to our support immediately fot this ) |
-| **`KA0005`** | IP Not whitelisted |
-| **`429`** | Ratelimit hit only 1000 request / minute allowed |
+| `KA0001` | Bearer Token Not Included |
+| `KA0002` | API Key Not 'LIVE' |
+| `KA0003` | Signature mismatch |
+| `KA0004` | Internal Server Error |
+| `KA0005` | IP Not whitelisted |
+| `429` | Rate limit hit (1000 req/min) |
 
+**JWT Layer (SERVER Side)**
 
- JWT Layer Authentication [SERVER SDK]
 | Code | Description |
 | :--- | :--- |
-| **`BA001`** | `Btoken` is nonce one time token is not included |
-| **`BA002`** | `Btoken` one time nonce mismatch |
-| **`BA000`** | Internal Server Error ( Talk to our support immediately fot this ) |
-| **`429`**   | Ratelimit hit only 1000 request / minute allowed |
+| `BA001` | `Btoken` nonce token missing |
+| `BA002` | `Btoken` nonce mismatch |
 
 
-### Response Codes
+**Response Codes**
 
 | Code | Status | Description |
 | :--- | :--- | :--- |
