@@ -2,8 +2,18 @@
 
 This documentation details the steps for integrating the mmpay-node-sdk into your application to securely send callbacks to the MyanMyanPay SDK server and to verify incoming callbacks from MyanMyanPay.
 
+## Features
+
+- Sandbox & Production Support: Dedicated methods for both environments.
+- Payment Creation & Retrieval: Endpoints to create payments and fetch transaction statuses.
+- HMAC SHA256 Signing: Automatic signature generation for request integrity.
+- Callback Verification: Utility to verify incoming webhooks from MMPay.
+- Object Models: Strongly typed request/response classes.
+
 ## ⬇️ 1. Installation
+
 Install the package via npm:
+
 ```bash
 npm install mmpay-node-sdk --save
 ```
@@ -17,14 +27,14 @@ It is CRITICAL that this key is loaded from an environment variable for security
 
 | Parameter | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| appId | str | Yes | Your unique Application ID. |
-| publishableKey | str | Yes | Public key for authentication. |
-| secretKey | str | Yes | Private key used for signing requests (HMAC). |
-| apiBaseUrl | str | Yes | The base URL for the MMPay API. |
+| `appId` | String | **Yes** | Your unique Application ID. |
+| `publishableKey` | String | **Yes** | Public key for authentication. |
+| `secretKey` | String | **Yes** | Private key used for signing requests (HMAC). |
+| `apiBaseUrl` | String | **Yes** | The base URL for the MMPay API. |
 
 **Implementation**
-```javascript
-// Load the SDK and configuration
+
+```typescript
 const { MMPaySDK } = require('mmpay-node-sdk');
 
 const MMPay = new MMPaySdk({
@@ -37,16 +47,17 @@ const MMPay = new MMPaySdk({
 
 ---
 
-
 ## 💳 3. Make Payment
 
 **Method Signature**
+
 ```typescript
 pay(payload: PaymentRequest): Promise<PaymentResponse>
 ```
 
 **Implementation**
-```javascript
+
+```typescript
 const amount = 1000;
 const orderId = 'ORD-199399933';
 const customMessage = 'myanmyanpay_is_the_best';
@@ -60,9 +71,7 @@ try {
 }
 ```
 
-
 **Request Body** (`payload` structure)
-The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
@@ -75,7 +84,6 @@ The request body should be a JSON object containing the transaction details.
 
 **Item Object**
 
-
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | **`name`** | `string` | The name of the item. |
@@ -83,7 +91,6 @@ The request body should be a JSON object containing the transaction details.
 | **`quantity`** | `number` | The number of units purchased. |
 
 **Response Body** Code (`201`)
-The response body should be a JSON object containing the following information.
 
 ```json
 {
@@ -99,28 +106,28 @@ The response body should be a JSON object containing the following information.
 
 ---
 
-## 🚀 4. Get Payment Information
+## 🚀 4. Retrieve a Payment Information
 
 **Method Signature**
+
 ```typescript
 get({orderId: string}): Promise<PayGetResponse>
 ```
 
 **Implementation**
-```javascript
+
+```typescript
 const response = await MMPay.get({orderId: 'ORD-111111111'});
 console.log(response)
 ```
 
 **Request Body** (`payload` structure)
-The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
 | **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
 
 **Response Body** Code (`200`)
-The response body should be a JSON object containing the following information.
 
 ```json
 {
@@ -148,25 +155,26 @@ The response body should be a JSON object containing the following information.
 
 ## 🚀 5. Cancel Payment
 
+**Method Signature**
+
 ```typescript
 cancel({orderId: string}): Promise<PayCancelResponse>
 ```
 
 **Implementation**
-```javascript
+
+```typescript
 const response = await MMPay.cancel({orderId: 'ORD-111111111')};
 console.log(response)
 ```
 
 **Request Body** (`payload` structure)
-The request body should be a JSON object containing the transaction details.
 
 | Field | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
 | **`orderId`**         | `string` | **Yes**    | Your generated order ID for the order or system initiating the payment. | `"ORD-3983833"` |
 
 **Response Body** Code (`200`)
-The response body should be a JSON object containing the following information.
 
 ```json
 {
@@ -180,6 +188,7 @@ The response body should be a JSON object containing the following information.
 ---
 
 ## 🔐 6. Handling Webhooks
+
 To secure your webhook endpoint that receives callbacks from the MMPay server, use this event listener to handle the events.
 The **listen** performs the mandatory Signature and Nonce verification and emits events
 
@@ -210,7 +219,7 @@ The **listen** performs the mandatory Signature and Nonce verification and emits
 
 **Implementation With Express JS**
 
-```javascript
+```typescript
 
 interface MMPayIncomingCallbackScheme {
   orderId: string;
@@ -254,7 +263,7 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 
 ---
 
-## 7. Error Codes
+## 💡 7. Error Codes
 
 **HMac Layer (SERVER Side)**
 
@@ -288,13 +297,13 @@ app.post('/webhooks/mmpay-callback', async (req: Request, res: Response) => {
 ---
 
 
-### Implementing with Browser Plugin `showPaymentModal()`
+## 💡 8. Implementing with Browser Plugin `showPaymentModal()`
 
 Verifying Source of Truth
 
 This is critical for those, using browser plugins with no source of truth. Cancel your order instantly if the amount is not the same as your source of truth.
 
-```javascript
+```typescript
 MMPay
   .onTxCreate((tx: MMPayIncomingCallbackScheme) => {
     const { amount } = await DB.getOrderId(tx.orderId)
@@ -305,11 +314,11 @@ MMPay
 ```
 
 
-## 💡 Putting All Together
+## 💡 9. Putting All Together
 
 Express JS Framwork Usage Full Example
 
-```javascript
+```typescript
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
